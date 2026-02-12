@@ -1,0 +1,10 @@
+zonnepanenlen plaatsen
+Stopcontatcten Shelly verbruik?
+
+
+Deuren
+RAmen
+Boel in een docker
+SQL database op ESP's voorbereiden
+
+lucht aftemmen op het weer

@@ -1,0 +1,1072 @@
+assets:
+  # Temperatuursensoren (Philips Hue Motion Sensors en Nest Thermostaat)
+
+  # Begane grond
+  - id: "hue_motion_sensor_toilet_temperatuur"
+    binary_id: "hue_motion_sensor_toilet_beweging"
+    friendly_name: "Toilet"
+    type: "temp_motion"
+    x: 0.50
+    y: 1.20
+    z: 0.90
+
+  - id: "hue_motion_sensor_hal_temperatuur"
+    binary_id: "hal_beweging"
+    friendly_name: "Hallway"
+    type: "temp_motion"
+    x: 2.20
+    y: 1.70
+    z: 1.50
+
+  - id: "hue_motion_sensor_keuken_temperatuur"
+    binary_id: "hue_motion_sensor_keuken_beweging"
+    friendly_name: "Kitchen"
+    type: "temp_motion"
+    x: 2.43
+    y: 1.70
+    z: 2.85
+
+  - id: "hue_motion_sensor_trapkast_temperatuur"
+    binary_id: "hue_motion_sensor_trapkast_beweging"
+    friendly_name: "Closet"
+    type: "temp_motion"
+    x: 0.90
+    y: 2.15
+    z: 5.10
+
+  - id: "hue_motion_sensor_schuur_temperatuur"
+    binary_id: "hue_motion_sensor_schuur_beweging"
+    friendly_name: "Shed"
+    type: "temp_motion"
+    x: -0.8
+    y: 1.50
+    z: -1.80
+
+  - id: "hue_outdoor_motion_sensor_1_temperatuur"
+    binary_id: "hue_outdoor_motion_sensor_1_beweging"
+    friendly_name: "Driveway"
+    type: "temp_motion"
+    x: 1.41
+    y: 0.30
+    z: -5.27
+
+  - id: "living_room_temperature"
+    friendly_name: "Living Room"
+    type: "temperature"
+    x: 1.05
+    y: 1.5
+    z: 4.43
+
+  # 1e verdieping
+  - id: "hue_motion_sensor_badkamer_temperatuur"
+    binary_id: "badkamer_beweging"
+    friendly_name: "Bathroom"
+    type: "temp_motion"
+    x: 3.25
+    y: 3.63
+    z: 2.94
+
+  - id: "hue_motion_sensor_kantoor_temperatuur"
+    binary_id: "hue_motion_sensor_kantoor_beweging"
+    friendly_name: "Office"
+    type: "temp_motion"
+    x: 0.77
+    y: 4.23
+    z: 6.17
+
+  - id: "hue_motion_sensor_trap_1_temperatuur"
+    binary_id: "hue_motion_sensor_trap_1_beweging"
+    friendly_name: "Stairs1"
+    type: "temp_motion"
+    x: 0.85
+    y: 2.63
+    z: 3.88
+
+  - id: "hue_motion_sensor_trap_2_temperatuur"
+    binary_id: "hue_motion_sensor_trap_2_beweging"
+    friendly_name: "Stairs2"
+    type: "temp_motion"
+    x: 0.85
+    y: 5.43
+    z: 3.05
+
+  - id: "hue_motion_sensor_13_temperature"
+    binary_id: "hue_motion_sensor_13_motion"
+    friendly_name: "Gym"
+    type: "temp_motion"
+    x: 4.85
+    y: 3.32
+    z: 1.50
+
+
+  # 2e verdieping
+  - id: "hue_motion_sensor_wasruimte_temperatuur"
+    binary_id: "hue_motion_sensor_wasruimte_beweging"
+    friendly_name: "Laundry Room"
+    type: "temp_motion"
+    x: 2.47
+    y: 6.26
+    z: 0.20
+
+  - id: "hue_motion_sensor_simon_temperatuur"
+    binary_id: "hue_motion_sensor_simon_beweging"
+    friendly_name: "BedroomSimon"
+    type: "temp_motion"
+    x: 4.75
+    y: 6.26
+    z: 6.07
+
+  - id: "hue_motion_sensor_patricia_temperatuur"
+    binary_id: "hue_motion_sensor_patricia_beweging"  
+    friendly_name: "BedroomPatricia"
+    type: "temp_motion"
+    x: 4.75 
+    y: 6.26
+    z: 4.14
+
+  # Lights
+  # Oprit
+  - id: "hue_white_spot_8"
+    ha_entity: "light.hue_white_spot_8"
+    friendly_name: "Driveway Spot 8"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.15
+    y: 1.80   
+    z: -0.80
+    rx: 0
+    ry: 180
+    rz: 345  
+
+  # Schuur
+  - id: "light.hue_white_lamp_1"
+    ha_entity: "light.hue_white_lamp_1"
+    friendly_name: "Shed bulb"
+    type: "lamp"
+    model: "bulb"
+    x: 0.27
+    y: 2.26   
+    z: -1.34
+    rx: 0
+    ry: 180
+    rz: 0  
+
+  # Keuken - Inbouwspots (verzonken IN plafond)
+  - id: "hue_color_spot_39"
+    ha_entity: "light.hue_color_spot_39"
+    friendly_name: "Kitchen Spot 39"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.8
+    y: 2.60
+    z: 2.44
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_40"
+    ha_entity: "light.hue_color_spot_40"
+    friendly_name: "Kitchen Spot 40"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.8
+    y: 2.60
+    z: 0.65
+    rx: 0
+    ry: 0
+    rz: 0
+
+  # Woonkamer - Spots (vloerlamp)
+  - id: "light.hue_essential_spot_1"
+    ha_entity: "light.hue_essential_spot_1"
+    friendly_name: "Living Room Spot 1"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.30
+    y: 1.45
+    z: 6.57
+    rx: 135
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_2"
+    ha_entity: "light.hue_essential_spot_2"
+    friendly_name: "Living Room Spot 2"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.30
+    y: 1.2
+    z: 6.57
+    rx: 135
+    ry: 0
+    rz: 0 
+
+  - id: "light.hue_essential_spot_3"
+    ha_entity: "light.hue_essential_spot_3"
+    friendly_name: "Living Room Spot 3"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.30
+    y: 1.325
+    z: 6.72
+    rx: 225
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_4"
+    ha_entity: "light.hue_essential_spot_4"
+    friendly_name: "Living Room Spot 4"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.30
+    y: 1.45
+    z: 10.32
+    rx: 135
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_5"
+    ha_entity: "light.hue_essential_spot_5"
+    friendly_name: "Living Room Spot 5"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.30
+    y: 1.325
+    z: 10.47
+    rx: 225
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_6"
+    ha_entity: "light.hue_essential_spot_6"
+    friendly_name: "Living Room Spot 6"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.30
+    y: 1.20
+    z: 10.32
+    rx: 135
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_7"
+    ha_entity: "light.hue_essential_spot_7"
+    friendly_name: "Living Room Spot 7"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 4.65
+    y: 1.45
+    z: 6.15
+    rx: 135
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_8"
+    ha_entity: "light.hue_essential_spot_8"
+    friendly_name: "Living Room Spot 8"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 4.65
+    y: 1.20
+    z: 6.15
+    rx: 135
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_essential_spot_9"
+    ha_entity: "light.hue_essential_spot_9"
+    friendly_name: "Living Room Spot 9"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 4.65
+    y: 1.325
+    z: 6.30
+    rx: 225
+    ry: 0
+    rz: 0
+
+  # Woonkamer Vloerlampen Sphere's
+
+  - id: "light.rechts_naast_bank"
+    ha_entity: "light.rechts_naast_bank"
+    friendly_name: "Living Room rechts naast bank"
+    type: "lamp"
+    model: "sphere"
+    x: 4.45
+    y: 0
+    z: 7.07
+
+  - id: "light.hue_color_op_drank"
+    ha_entity: "light.hue_color_op_drank"
+    friendly_name: "Living Room op drankkast"
+    type: "lamp"
+    model: "sphere"
+    x: 4.45
+    y: 1.88
+    z: 3.10
+
+  - id: "light.hue_color_rechts_achter_grond"
+    ha_entity: "light.hue_color_rechts_achter_grond"
+    friendly_name: "Living Room - Keuken op kast"
+    type: "lamp"
+    model: "sphere"
+    x: 2.8
+    y: 1.73
+    z: 2.8  
+
+  - id: "light.naast_tv_links"
+    ha_entity: "light.naast_tv_links"
+    friendly_name: "Living Room naast TV links"
+    type: "lamp"
+    model: "sphere"
+    x: 0.45
+    y: 0.50
+    z: 9.75
+
+  - id: "light.hue_color_lamp_1"
+    ha_entity: "light.hue_color_lamp_1"
+    friendly_name: "Living Room links naast bank"
+    type: "lamp"
+    model: "sphere"
+    x: 4.45
+    y: 0
+    z: 10.72
+
+  - id: "light.naast_tv_rechts"
+    ha_entity: "light.naast_tv_rechts"
+    friendly_name: "Living Room naast TV rechts"
+    type: "lamp"
+    model: "sphere"
+    x: 0.45
+    y: 0.50
+    z: 7.35
+
+  - id: "light.hue_filament_bulb_9"
+    ha_entity: "light.hue_filament_bulb_9"
+    friendly_name: "Living Room Sfeerlamp 1"
+    type: "lamp"
+    model: "bulb"
+    x: 0.6
+    y: 0.62
+    z: 10.6
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_10"
+    ha_entity: "light.hue_filament_bulb_10"
+    friendly_name: "Living Room Sfeerlamp 2"
+    type: "lamp"
+    model: "bulb"
+    x: 0.6
+    y: 0.80
+    z: 10.6
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_11"
+    ha_entity: "light.hue_filament_bulb_11"
+    friendly_name: "Living Room Sfeerlamp 3"
+    type: "lamp"
+    model: "bulb"
+    x: 0.6
+    y: 0.98
+    z: 10.6
+    rx: 0
+    ry: 0
+    rz: 0
+
+  # Trapkast
+  - id: "hue_white_spot_2"
+    ha_entity: "light.hue_white_spot_2"
+    friendly_name: "light.hue_white_spot_2"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.50
+    y: 2.40   
+    z: 5.90
+    rx: 45
+    ry: 0
+    rz: 45  
+
+  # Toilet Spot (Opbouw, hangend ONDER plafond)
+  - id: "hue_white_spot_1"
+    ha_entity: "light.hue_white_spot_1"
+    friendly_name: "light.hue_white_spot_1"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.575
+    y: 2.57   
+    z: 0.85
+    rx: 22.5 
+    ry: 0
+    rz: 45   
+
+  - id: "hue_white_spot_4"
+    ha_entity: "light.hue_white_spot_4"
+    friendly_name: "light.hue_white_spot_4"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.425
+    y: 2.57   
+    z: 0.85
+    rx: 22.5 
+    ry: 0
+    rz: 320  
+
+  # Gang - WC-rol spots (Opbouw, hangend ONDER plafond)
+  - id: "hue_color_spot_41"
+    ha_entity: "light.hue_color_spot_41"
+    friendly_name: "Gang Spot 41"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.66
+    y: 2.57 
+    z: 1.51
+    rx: 45  
+    ry: 0
+    rz: 320
+
+  - id: "hue_color_spot_42"
+    ha_entity: "light.hue_color_spot_42"
+    friendly_name: "light.hue_color_spot_42"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.66
+    y: 2.57   
+    z: 1.79
+    rx: 320
+    ry: 0
+    rz: 45
+
+  - id: "hue_color_spot_46"
+    ha_entity: "light.hue_color_spot_46"
+    friendly_name: "light.hue_color_spot_46"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.66
+    y: 2.57 
+    z: 1.65
+    rx: 320  
+    ry: 0
+    rz: 320
+
+# 1e Etage
+# Office - Spots (Opbouw, hangend ONDER plafond)
+  - id: "hue_color_spot_35"
+    ha_entity: "light.hue_color_spot_35"
+    friendly_name: "light.hue_color_spot_35"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.2
+    y: 5.17   
+    z: 7.61
+    rx: 45
+    ry: 0
+    rz: 320
+
+  - id: "hue_color_spot_36"
+    ha_entity: "light.hue_color_spot_36"
+    friendly_name: "light.hue_color_spot_36"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.2
+    y: 5.17   
+    z: 7.76
+    rx: 320 
+    ry: 0
+    rz: 45
+
+  - id: "hue_color_spot_37"
+    ha_entity: "light.hue_color_spot_37"
+    friendly_name: "light.hue_color_spot_37"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.05
+    y: 5.17 
+    z: 7.61
+    rx: 320 
+    ry: 0
+    rz: 320
+  
+  - id: "hue_color_spot_38"
+    ha_entity: "light.hue_color_spot_38"
+    friendly_name: "light.hue_color_spot_38"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.05
+    y: 5.17
+    z: 7.76
+    rx: 320
+    ry: 0
+    rz: 320
+
+# Overloop - Spots (Opbouw, hangend ONDER plafond)
+  - id: "hue_color_spot_43"
+    ha_entity: "light.hue_color_spot_43"
+    friendly_name: "light.hue_color_spot_43"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.63
+    y: 5.17   
+    z: 4.65
+    rx: 320 
+    ry: 0
+    rz: 45
+
+  - id: "hue_color_spot_44"
+    ha_entity: "light.hue_color_spot_44"
+    friendly_name: "light.hue_color_spot_44"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.63
+    y: 5.17 
+    z: 4.35
+    rx: 320 
+    ry: 0
+    rz: 320
+  
+  - id: "hue_color_spot_49"
+    ha_entity: "light.hue_color_spot_49"
+    friendly_name: "light.hue_color_spot_49"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 1.63
+    y: 5.17
+    z: 4.5
+    rx: 320
+    ry: 0
+    rz: 320
+
+# Inloopkast - Spots (Opbouw, hangend ONDER plafond)
+  - id: "hue_white_spot_3"
+    ha_entity: "light.hue_white_spot_3"
+    friendly_name: "light.hue_white_spot_3"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.825
+    y: 5.17   
+    z: 7.135
+    rx: 320 
+    ry: 0
+    rz: 45    
+
+  - id: "hue_white_spot_5"
+    ha_entity: "light.hue_white_spot_5"
+    friendly_name: "light.hue_white_spot_5"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.675
+    y: 5.17   
+    z: 7.135
+    rx: 320 
+    ry: 0
+    rz: 320    
+
+  - id: "hue_white_spot_6"
+    ha_entity: "light.hue_white_spot_6"
+    friendly_name: "light.hue_white_spot_6"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.675
+    y: 5.17   
+    z: 7.075
+    rx: 320 
+    ry: 0
+    rz: 320    
+
+  - id: "hue_white_spot_7"
+    ha_entity: "light.hue_white_spot_7"
+    friendly_name: "light.hue_white_spot_7"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.825
+    y: 5.17   
+    z: 7.075
+    rx: 45 
+    ry: 0
+    rz: 320    
+
+  - id: "light.hue_lightstrip_plus_5"
+    ha_entity: "light.hue_lightstrip_plus_5"
+    friendly_name: "light.hue_lightstrip_plus_5"
+    type: "lamp"
+    model: "light_tube"
+    length: 2
+    x: 2.50
+    y: 4.90   
+    z: 7
+    rx: 0
+    ry: 90
+    rz: 0
+
+  - id: "light.hue_filament_bulb_12"
+    ha_entity: "light.hue_filament_bulb_12"
+    friendly_name: "light.hue_filament_bulb_12"
+    type: "lamp"
+    model: "bulb"
+    x: 4.55
+    y: 4.08
+    z: 7.90
+    rx: 0
+    ry: 0
+    rz: 0 
+
+# Sportkamer - Plafondlamp (Opbouw, hangend ONDER plafond)
+  - id: "hue_color_spot_24"
+    ha_entity: "light.hue_color_spot_24"
+    friendly_name: "light.hue_color_spot_24"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.35
+    y: 5.17   
+    z: 1.55
+    rx: 320 
+    ry: 0
+    rz: 320
+
+  - id: "hue_color_spot_25"
+    ha_entity: "light.hue_color_spot_25"
+    friendly_name: "light.hue_color_spot_25"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.35
+    y: 5.17   
+    z: 1.40
+    rx: 45 
+    ry: 0
+    rz: 320
+
+  - id: "hue_color"
+    ha_entity: "light.hue_color"
+    friendly_name: "light.hue_color"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.50
+    y: 5.17   
+    z: 1.55
+    rx: 320 
+    ry: 0
+    rz: 45
+
+  - id: "hue_color_spot_29"
+    ha_entity: "light.hue_color_spot_29"
+    friendly_name: "light.hue_color_spot_29"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.50
+    y: 5.17   
+    z: 1.40
+    rx: 45 
+    ry: 0
+    rz: 320
+
+# Badkamer
+  - id: "light.hue_ambiance_spot_1"
+    ha_entity: "light.hue_ambiance_spot_1"
+    friendly_name: "light.hue_ambiance_spot_1"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.15
+    y: 4.63   
+    z: 3.05
+    rx: 0 
+    ry: 270
+    rz: 22
+
+  - id: "light.hue_ambiance_spot_2"
+    ha_entity: "light.hue_ambiance_spot_2"
+    friendly_name: "light.hue_ambiance_spot_2"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.6
+    y: 5.17
+    z: 4.025
+    rx: 320
+    ry: 0
+    rz: 320
+
+  - id: "light.hue_ambiance_spot_3"
+    ha_entity: "light.hue_ambiance_spot_3"
+    friendly_name: "light.hue_ambiance_spot_3"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 3.6
+    y: 5.17
+    z: 3.875
+    rx: 320
+    ry: 0
+    rz: 45
+
+  - id: "light.hue_ambiance_spot_4"
+    ha_entity: "light.hue_ambiance_spot_4"
+    friendly_name: "light.hue_ambiance_spot_4"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 2.53
+    y: 4.63
+    z: 3.05
+    rx: 0
+    ry: 270
+    rz: 22  
+
+# Schilderij
+  - id: "hue_color_spot_30"
+    ha_entity: "light.hue_color_spot_30"
+    friendly_name: "light.hue_color_spot_30"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.50
+    y: 7.46  
+    z: 4.43
+    rx: 0 
+    ry: 270
+    rz: 22 
+
+# Trap naar zolder
+  - id: "hue_color_spot_45"
+    ha_entity: "light.hue_color_spot_45"
+    friendly_name: "light.hue_color_spot_45"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 0.50
+    y: 7.46 
+    z: 4.58
+    rx: 0
+    ry: 180
+    rz: 45
+
+# Wasruimte
+  - id: "hue_color_spot_47"
+    ha_entity: "light.hue_color_spot_47"
+    friendly_name: "light.hue_color_spot_47"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 2.28
+    y: 7.26 
+    z: 2.88
+    rx: 45
+    ry: 0
+    rz: 22
+
+  - id: "hue_color_spot_48"
+    ha_entity: "light.hue_color_spot_48"
+    friendly_name: "light.hue_color_spot_48"
+    type: "lamp"
+    model: "cylinder_spot"
+    x: 2.48
+    y: 7.26 
+    z: 2.88
+    rx: 55
+    ry: 22
+    rz: 22
+  
+  # Slaapkamer vloer
+
+  - id: "light.hue_lightstrip_plus_1"
+    ha_entity: "light.hue_lightstrip_plus_1"
+    friendly_name: "light.hue_lightstrip_plus_1"
+    type: "lamp"
+    model: "light_tube"
+    length: 1
+    x: 0.50
+    y: 7.06   
+    z: 6.30
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_lightstrip_plus_2"
+    ha_entity: "light.hue_lightstrip_plus_2"
+    friendly_name: "light.hue_lightstrip_plus_2"
+    type: "lamp"
+    model: "light_tube"
+    length: 2
+    x: 3.95
+    y: 5.35 
+    z: 4.49
+    rx: 0
+    ry: 0
+    rz: 0
+  
+  - id: "light.hue_lightstrip_plus_3"
+    ha_entity: "light.hue_lightstrip_plus_3"
+    friendly_name: "light.hue_lightstrip_plus_3"
+    type: "lamp"
+    model: "light_tube"
+    length: 1
+    x: 0.50
+    y: 6.64   
+    z: 6.30
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_lightstrip_plus_4"
+    ha_entity: "light.hue_lightstrip_plus_4"
+    friendly_name: "light.hue_lightstrip_plus_4"
+    type: "lamp"
+    model: "light_tube"
+    length: 2
+    x: 3.95
+    y: 5.35
+    z: 6.07
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_1"
+    ha_entity: "light.hue_filament_bulb_1"
+    friendly_name: "BedroomSfeerlamp 1"
+    type: "lamp"
+    model: "bulb"
+    x: 4.35
+    y: 6.23
+    z: 8.60
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_3"
+    ha_entity: "light.hue_filament_bulb_3"
+    friendly_name: "BedroomSfeerlamp 2"
+    type: "lamp"
+    model: "bulb"
+    x: 4.35
+    y: 6.41
+    z: 8.60
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_5"
+    ha_entity: "light.hue_filament_bulb_5"
+    friendly_name: "BedroomSfeerlamp 3"
+    type: "lamp"
+    model: "bulb"
+    x: 2.30
+    y: 5.88
+    z: 3.30
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_6"
+    ha_entity: "light.hue_filament_bulb_6"
+    friendly_name: "BedroomSfeerlamp 4"
+    type: "lamp"
+    model: "bulb"
+    x: 2.30
+    y: 6.06
+    z: 3.30
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_7"
+    ha_entity: "light.hue_filament_bulb_7"
+    friendly_name: "BedroomSfeerlamp 5"
+    type: "lamp"
+    model: "bulb"
+    x: 2.30
+    y: 6.24
+    z: 3.30
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "light.hue_filament_bulb_8"
+    ha_entity: "light.hue_filament_bulb_8"
+    friendly_name: "BedroomSfeerlamp 6"
+    type: "lamp"
+    model: "bulb"
+    x: 4.35
+    y: 6.59
+    z: 8.60
+    rx: 0
+    ry: 0
+    rz: 0
+
+  # Slaapkamer Plafond - vlak stuk
+  - id: "hue_color_spot_17"
+    ha_entity: "light.hue_color_spot_17"
+    friendly_name: "BedroomSpot 17"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.45
+    y: 7.99
+    z: 6.77
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_23"
+    ha_entity: "light.hue_color_spot_23"
+    friendly_name: "BedroomSpot 23"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.45
+    y: 7.99
+    z: 7.735
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_18"
+    ha_entity: "light.hue_color_spot_18"
+    friendly_name: "BedroomSpot 18"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.45
+    y: 7.99
+    z: 8.70
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_19"
+    ha_entity: "light.hue_color_spot_19"
+    friendly_name: "BedroomSpot 19"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 3.13
+    y: 7.99
+    z: 6.77
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_13"
+    ha_entity: "light.hue_color_spot_13"
+    friendly_name: "BedroomSpot 13"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 3.13
+    y: 7.99
+    z: 8.70
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_15"
+    ha_entity: "light.hue_color_spot_15"
+    friendly_name: "BedroomSpot 15"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 1.82
+    y: 7.99
+    z: 6.77
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_14"
+    ha_entity: "light.hue_color_spot_14"
+    friendly_name: "BedroomSpot 14"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 1.82
+    y: 7.99
+    z: 8.70
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_21"
+    ha_entity: "light.hue_color_spot_21"
+    friendly_name: "BedroomSpot 21"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 0.50
+    y: 7.99
+    z: 6.77
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_16"
+    ha_entity: "light.hue_color_spot_16"
+    friendly_name: "BedroomSpot 16"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 0.50
+    y: 7.99
+    z: 7.735
+    rx: 0
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_12"
+    ha_entity: "light.hue_color_spot_12"
+    friendly_name: "BedroomSpot 12"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 0.50
+    y: 7.99
+    z: 8.70
+    rx: 0
+    ry: 0
+    rz: 0
+
+# Slaapkamer Plafond - schuin
+
+  - id: "hue_color_spot_9"
+    ha_entity: "light.hue_color_spot_9"
+    friendly_name: "BedroomSpot 9"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.45
+    y: 7.51
+    z: 3.44
+    rx: 350
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_10"
+    ha_entity: "light.hue_color_spot_10"
+    friendly_name: "BedroomSpot 10"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 3.13
+    y: 7.51
+    z: 3.44
+    rx: 350
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_11"
+    ha_entity: "light.hue_color_spot_11"
+    friendly_name: "BedroomSpot 11"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 1.82
+    y: 7.51
+    z: 3.44
+    rx: 350
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_20"
+    ha_entity: "light.hue_color_spot_20"
+    friendly_name: "BedroomSpot 20"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 4.45
+    y: 7.81
+    z: 5.07
+    rx: 350
+    ry: 0
+    rz: 0
+
+  - id: "hue_color_spot_22"
+    ha_entity: "light.hue_color_spot_22"
+    friendly_name: "BedroomSpot 22"
+    type: "lamp"
+    model: "recessed_spot"
+    x: 1.82
+    y: 7.81
+    z: 5.07
+    rx: 350
+    ry: 0
+    rz: 0

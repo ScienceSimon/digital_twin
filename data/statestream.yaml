@@ -1,0 +1,4 @@
+assets:
+  - id: netto_stroomverbruik
+    name: "Net Power Usage"
+    position: { x: 5, y: 10, z: 5.5 }

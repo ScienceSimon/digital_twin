@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Digital Twin</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { 
+            background: #0a0a0f;
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* GLASSMORPHISM BASE STIJL - zoals temp-pills */
+        .glass-panel {
+            background: rgba(10, 10, 15, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        /* TITEL - MIDDEN BOVEN */
+        #main-title {
+            position: absolute;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #44aaff;
+            text-shadow: 0 0 15px rgba(68, 170, 255, 0.5);
+            z-index: 100;
+        }
+
+        /* TOGGLE UI BUTTON */
+        #toggle-ui-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            padding: 6px 12px;
+            background: rgba(10, 10, 15, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1.5px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #toggle-ui-btn:hover {
+            color: white;
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* EVENT LOG - LINKS */
+        #event-log-container {
+            position: absolute;
+            top: 100px;
+            left: 20px;
+            width: 340px;
+            height: calc(100vh - 140px);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        #event-log-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        #event-log-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #event-log-header span {
+            font-weight: 700;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            color: #44aaff;
+            text-shadow: 0 0 10px rgba(68, 170, 255, 0.4);
+        }
+
+        #event-log-controls {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .log-control-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+
+        .log-control-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .log-control-btn.active {
+            background: rgba(68, 170, 255, 0.2);
+            border-color: #44aaff;
+            color: #44aaff;
+        }
+
+        #pause-log-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: color 0.2s;
+            padding: 4px 8px;
+        }
+
+        #pause-log-btn:hover {
+            color: #ffaa44;
+        }
+
+        #pause-log-btn.paused {
+            color: #ffaa44;
+        }
+
+        #clear-log-btn {
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            transition: color 0.2s;
+        }
+
+        #clear-log-btn:hover {
+            color: #ff4444;
+        }
+
+        #event-entries {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-entry {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            border-left: 2px solid transparent;
+            animation: slideIn 0.4s ease-out;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+            transition: all 0.2s ease;
+        }
+
+        .log-entry:hover {
+            background: rgba(0, 0, 0, 0.35);
+            transform: translateX(2px);
+        }
+
+        .log-entry.info { 
+            border-left-color: rgba(68, 170, 255, 0.8);
+            box-shadow: -2px 0 6px rgba(68, 170, 255, 0.4);
+        }
+        .log-entry.warning { 
+            border-left-color: rgba(255, 170, 68, 0.8);
+            box-shadow: -2px 0 6px rgba(255, 170, 68, 0.4);
+        }
+        .log-entry.error { 
+            border-left-color: rgba(255, 68, 68, 0.8);
+            box-shadow: -2px 0 6px rgba(255, 68, 68, 0.5);
+        }
+        .log-entry.success {
+            border-left-color: rgba(76, 217, 100, 0.8);
+            box-shadow: -2px 0 6px rgba(76, 217, 100, 0.4);
+        }
+        .log-entry.light-off {
+            border-left-color: rgba(80, 80, 80, 0.6);
+            box-shadow: -2px 0 6px rgba(80, 80, 80, 0.3);
+        }
+
+        /* Timestamps in log entries */
+        .log-entry .timestamp {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 9px;
+            font-family: 'Consolas', monospace;
+        }
+
+        /* Values - temperaturen gewoon tekst */
+        .log-entry .value {
+            font-weight: 700;
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* Status dot voor ON/OFF */
+        .log-entry .status-indicator {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-left: 6px;
+        }
+
+        .log-entry.success .status-indicator {
+            background-color: #4cd964;
+            box-shadow: 0 0 6px rgba(76, 217, 100, 0.6);
+        }
+
+        .log-entry.error .status-indicator {
+            background-color: #ff4444;
+            box-shadow: 0 0 6px rgba(255, 68, 68, 0.6);
+        }
+
+        .log-entry.warning .status-indicator {
+            background-color: #ffaa44;
+            box-shadow: 0 0 6px rgba(255, 170, 68, 0.6);
+        }
+
+        .log-entry.light-off .status-indicator {
+            background-color: #404040;
+            box-shadow: 0 0 4px rgba(64, 64, 64, 0.4);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-10px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        #event-entries::-webkit-scrollbar { width: 5px; }
+        #event-entries::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.05); border-radius: 10px; }
+        #event-entries::-webkit-scrollbar-thumb { background: rgba(68, 170, 255, 0.3); border-radius: 10px; }
+        #event-entries::-webkit-scrollbar-thumb:hover { background: rgba(68, 170, 255, 0.5); }
+
+        /* FILTERS/CONTROLS - RECHTS */
+        #control-panel {
+            position: absolute;
+            top: 100px;
+            right: 20px;
+            width: 280px;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        #control-panel h3 {
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            color: #44aaff;
+            text-shadow: 0 0 10px rgba(68, 170, 255, 0.4);
+            margin-bottom: 4px;
+        }
+
+        #location-info {
+            font-size: 9px;
+            color: #666;
+            margin-bottom: 16px;
+        }
+
+        .control-divider {
+            border: 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin: 16px 0;
+        }
+
+        .control-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+
+        /* Floor buttons */
+        .floor-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .layer-btn {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            color: white;
+            border: 1.5px solid rgba(255, 255, 255, 0.15);
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+            letter-spacing: 0.5px;
+        }
+
+        .layer-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(68, 170, 255, 0.4);
+            box-shadow: 0 0 12px rgba(68, 170, 255, 0.2);
+        }
+
+        .layer-btn.active {
+            background: rgba(26, 73, 245, 0.3);
+            border-color: #44aaff;
+            color: #44aaff;
+            box-shadow: 0 0 16px rgba(68, 170, 255, 0.5);
+        }
+
+        /* Toggle switches */
+        .toggle-box {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            cursor: pointer;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.75);
+            transition: color 0.2s;
+        }
+
+        .toggle-box:hover {
+            color: white;
+        }
+
+        .toggle-box input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            accent-color: #44aaff;
+        }
+
+        .toggle-box.error-toggle {
+            color: rgba(255, 68, 68, 0.8);
+        }
+
+        .toggle-box.error-toggle:hover {
+            color: #ff4444;
+        }
+
+        /* TIME SLIDER - RECHTSONDER */
+        #time-control {
+            position: absolute;
+            bottom: 30px;
+            right: 20px;
+            width: 280px;
+            padding: 16px 20px;
+            z-index: 1000;
+        }
+
+        #time-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        #time-display-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        #time-display {
+            font-size: 24px;
+            font-weight: 700;
+            color: #44aaff;
+            text-shadow: 0 0 12px rgba(68, 170, 255, 0.5);
+            font-family: 'Consolas', monospace;
+        }
+
+        #timeSlider {
+            width: 100%;
+            height: 6px;
+            border-radius: 10px;
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        #timeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #44aaff;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(68, 170, 255, 0.8);
+            transition: all 0.2s;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        #timeSlider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(68, 170, 255, 1);
+            animation: none;
+        }
+
+        #timeSlider::-webkit-slider-thumb:active {
+            transform: scale(1.3);
+            box-shadow: 0 0 25px rgba(68, 170, 255, 1);
+        }
+
+        #timeSlider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #44aaff;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 12px rgba(68, 170, 255, 0.8);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        #timeSlider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px rgba(68, 170, 255, 1);
+        }
+
+        @keyframes pulse {
+            0%, 100% { 
+                box-shadow: 0 0 12px rgba(68, 170, 255, 0.8);
+            }
+            50% { 
+                box-shadow: 0 0 18px rgba(68, 170, 255, 1);
+            }
+        }
+
+        /* SENSOR LABEL STYLES - zoals in je 3D scene */
+        .temp-pill {
+            padding: 0;
+            background: none;
+            border: none;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            white-space: nowrap;
+            pointer-events: none;
+            transition: all 0.3s ease;
+        }
+
+        .temp-pill .sensor-name {
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .temp-pill .temp-value {
+            font-weight: 700;
+            text-shadow: 0 0 8px currentColor;
+        }
+
+        .temp-pill .coord-display {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .light-label {
+            padding: 3px 6px;
+            background: rgba(34, 32, 32, 0.9);
+            border-radius: 4px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 8px;
+            font-weight: 500;
+            color: #7c7c7c;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .metric-label {
+            padding: 5px 8px;
+            background: rgba(30, 30, 35, 0.95);
+            border: 1px solid rgba(255, 215, 0, 0.4);
+            border-radius: 5px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            color: #ffd700;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            transform: translateZ(0);
+            backface-visibility: hidden;
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-optimize-contrast;
+        }
+
+        .metric-icon {
+            color: #ffd700;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
+
+        .metric-value {
+            color: #ffffff;
+            text-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            background-color: #444;
+            box-shadow: 0 0 4px rgba(68, 68, 68, 0.6);
+            transition: all 0.3s ease;
+        }
+
+        .status-detected {
+            background-color: #4cd964;
+            box-shadow: 0 0 12px rgba(76, 217, 100, 0.8), inset 0 0 4px rgba(255, 255, 255, 0.3);
+        }
+
+        .status-clear {
+            background-color: #ff4444;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.7), inset 0 0 4px rgba(255, 255, 255, 0.2);
+        }
+
+        .sensor-failed {
+            padding: 6px 10px;
+            background: rgba(255, 68, 68, 0.2);
+            backdrop-filter: blur(6px);
+            border-radius: 8px;
+            font-size: 10px;
+            font-weight: bold;
+            color: #ff4444;
+            border: 1.5px solid #ff4444;
+            white-space: nowrap;
+            pointer-events: none;
+            box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+            animation: blinker 2s ease-in-out infinite;
+        }
+
+        @keyframes blinker {
+            50% { opacity: 0.4; }
+        }
+
+        .room-label-new {
+            color: rgba(255, 255, 255, 0.8);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 7px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            pointer-events: none;
+            white-space: nowrap;
+            text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.9);
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+</head>
+<body>
+
+    <!-- TITEL - MIDDEN BOVEN -->
+    <div id="main-title">Digital Twin</div>
+
+    <!-- TOGGLE UI BUTTON - LINKS BOVEN -->
+    <button id="toggle-ui-btn" onclick="
+        const log = document.getElementById('event-log-container');
+        const panel = document.getElementById('control-panel');
+        const time = document.getElementById('time-control');
+        const visible = log.style.display !== 'none';
+        log.style.display = visible ? 'none' : '';
+        panel.style.display = visible ? 'none' : '';
+        time.style.display = visible ? 'none' : '';
+        this.textContent = visible ? 'Show UI' : 'Hide UI';
+    ">Hide UI</button>
+
+    <!-- EVENT LOG - LINKS -->
+    <div id="event-log-container" class="glass-panel">
+        <div id="event-log-header">
+            <div id="event-log-title-row">
+                <span>Event Log</span>
+                <div style="display: flex; gap: 6px;">
+                    <button id="pause-log-btn" onclick="window.eventLog.togglePause(this)">Pause</button>
+                    <button id="clear-log-btn" onclick="window.eventLog.clear()">Clear</button>
+                </div>
+            </div>
+            <div id="event-log-controls">
+                <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('all', this)">All</button>
+                <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('temp', this)">Temp</button>
+                <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('motion', this)">Motion</button>
+                <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('lights', this)">Lights</button>
+            </div>
+        </div>
+        <div id="event-entries"></div>
+    </div>
+
+    <!-- CONTROL PANEL - RECHTS -->
+    <div id="control-panel" class="glass-panel">
+        <h3>Scene Controls</h3>
+        <div id="location-info">
+            <span id="locDisplay">Loading location...</span>
+        </div>
+
+        <hr class="control-divider">
+
+        <div class="control-section-title">Floors</div>
+        <div class="floor-buttons">
+            <button class="layer-btn active" onclick="window.engine.toggleFloor(0, this)">Ground</button>
+            <button class="layer-btn active" onclick="window.engine.toggleFloor(1, this)">1st</button>
+            <button class="layer-btn active" onclick="window.engine.toggleFloor(2, this)">Attic</button>
+        </div>
+
+        <hr class="control-divider">
+
+        <div class="control-section-title">Display</div>
+        <label class="toggle-box">
+            <input type="checkbox" onchange="window.engine.toggleXRay(this.checked)">
+            <span>X-Ray Mode</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" checked onchange="window.engine.toggleLabels(this.checked)">
+            <span>Room Names</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" checked onchange="window.engine.toggleFloors(this.checked)">
+            <span>Floors</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" checked onchange="window.engine.toggleWalls(this.checked)">
+            <span>Walls</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" onchange="window.engine.toggleCoordinates(this.checked)">
+            <span>Coordinates</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" onchange="window.engine.toggleLights(this.checked)">
+            <span>Light Labels</span>
+        </label>
+        <label class="toggle-box error-toggle">
+            <input type="checkbox" checked onchange="window.engine.toggleFailedSensors(this.checked)">
+            <span>Errors</span>
+        </label>
+
+        <hr class="control-divider">
+
+        <div class="control-section-title">Sensors</div>
+        <label class="toggle-box">
+            <input type="checkbox" checked onchange="window.engine.toggleTemperature(this.checked)">
+            <span>Temperature</span>
+        </label>
+    </div>
+
+    <!-- TIME SLIDER - RECHTSONDER -->
+    <div id="time-control" class="glass-panel">
+        <div id="time-label">Time of the Day</div>
+        <div id="time-display-box">
+            <span id="time-display">12:00</span>
+        </div>
+        <input type="range" id="timeSlider" min="0" max="24" step="0.1" value="12">
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "orbitcontrols": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+                "css2drenderer": "https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js"
+            }
+        }
+    </script>
+
+    <script>
+        // Event Log Controls
+        window.eventLog = {
+            paused: false,
+            activeFilters: { all: true, temp: true, motion: true, lights: true },
+
+            togglePause: function(btn) {
+                this.paused = !this.paused;
+                btn.textContent = this.paused ? 'Resume' : 'Pause';
+                btn.classList.toggle('paused', this.paused);
+            },
+
+            clear: function() {
+                document.getElementById('event-entries').innerHTML = '';
+            },
+
+            toggleFilter: function(type, btn) {
+                // Toggle the button state
+                btn.classList.toggle('active');
+                this.activeFilters[type] = btn.classList.contains('active');
+
+                // If "All" is clicked, toggle all other buttons to match
+                if (type === 'all') {
+                    const allState = this.activeFilters.all;
+                    document.querySelectorAll('.log-control-btn').forEach(b => {
+                        b.classList.toggle('active', allState);
+                    });
+                    this.activeFilters = { all: allState, temp: allState, motion: allState, lights: allState };
+                } else {
+                    // If any individual filter is toggled off, turn off "All"
+                    if (!this.activeFilters[type]) {
+                        this.activeFilters.all = false;
+                        document.querySelectorAll('.log-control-btn').forEach(b => {
+                            if (b.textContent === 'All') b.classList.remove('active');
+                        });
+                    }
+                    // If all individual filters are on, turn on "All"
+                    else if (this.activeFilters.temp && this.activeFilters.motion && this.activeFilters.lights) {
+                        this.activeFilters.all = true;
+                        document.querySelectorAll('.log-control-btn').forEach(b => {
+                            if (b.textContent === 'All') b.classList.add('active');
+                        });
+                    }
+                }
+
+                // Apply filter to existing entries
+                this.applyFilters();
+            },
+
+            applyFilters: function() {
+                const entries = document.querySelectorAll('.log-entry');
+                entries.forEach(entry => {
+                    let shouldShow = false;
+
+                    if (this.activeFilters.all) {
+                        shouldShow = true;
+                    } else {
+                        if (this.activeFilters.temp && entry.classList.contains('info')) shouldShow = true;
+                        if (this.activeFilters.motion && (entry.classList.contains('success') || entry.classList.contains('error'))) shouldShow = true;
+                        if (this.activeFilters.lights && (entry.classList.contains('warning') || entry.classList.contains('light-off'))) shouldShow = true;
+                    }
+
+                    entry.style.display = shouldShow ? 'block' : 'none';
+                });
+            },
+
+            isPaused: function() {
+                return this.paused;
+            },
+
+            shouldShow: function(type) {
+                if (this.activeFilters.all) return true;
+                if (this.activeFilters.temp && type === 'TEMP') return true;
+                if (this.activeFilters.motion && type === 'MOTION') return true;
+                if (this.activeFilters.lights && type === 'LIGHT') return true;
+                return false;
+            }
+        };
+    </script>
+
+    <script type="module" src="main.js"></script>
+
+</body>
+</html>
