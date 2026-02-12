@@ -7,8 +7,6 @@ import { MqttService } from './modules/core/MqttService.js';
 import { CSS2DObject } from 'css2drenderer';
 import { updateSpotAppearance } from './modules/models/modelFusion.js'; 
 
-require('dotenv').config();
-
 const state = {
     scene: null,
     sunLight: null,
@@ -63,12 +61,8 @@ async function init() {
         // 4. MQTT Initialisatie
         if (sensorLijst) {
             console.log("MQTT Service opstarten...");
-            state.mqtt = new MqttService(
-                process.env.MQTT_HOST, 
-                parseInt(process.env.MQTT_PORT), 
-                process.env.MQTT_USER, 
-                process.env.MQTT_PASS
-            );
+            
+            state.mqtt = new MqttService(config.MQTT_HOST, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASS);
             state.mqtt.setSensorData(sensorLijst);
 
             // Callback instellen
