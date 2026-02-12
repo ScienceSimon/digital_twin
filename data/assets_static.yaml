@@ -4,71 +4,71 @@ assets:
   # Row 1
   - id: "solar_panel_01"
     type: "solar_panel"
-    position: { x: 0.50, y: 10, z: 10.0 }
+    position: { x: 0.93, y: 2.8, z: 10.3 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_02"
     type: "solar_panel"
-    position: { x: 1.25, y: 10, z: 10.0 }
+    position: { x: 1.96, y: 2.8, z: 10.3 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_03"
     type: "solar_panel"
-    position: { x: 2.00, y: 10, z: 10.0 }
+    position: { x: 2.99, y: 2.8, z: 10.3 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_04"
     type: "solar_panel"
-    position: { x: 2.75, y: 10, z: 10.0 }
+    position: { x: 4.02, y: 2.8, z: 10.3 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_05"
     type: "solar_panel"
-    position: { x: 3.50, y: 10, z: 10.0 }
+    position: { x: 0.93, y: 8.22, z: 8.225 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_06"
     type: "solar_panel"
-    position: { x: 4.25, y: 10, z: 10.0 }
+    position: { x: 1.96, y: 8.22, z: 8.225 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_07"
     type: "solar_panel"
-    position: { x: 5.00, y: 10, z: 10.0 }
+    position: { x: 2.99, y: 8.22, z: 8.225 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_08"
     type: "solar_panel"
-    position: { x: 0.50, y: 10, z: 11.2 }
+    position: { x: 4.02, y: 8.22, z: 8.225 }
     rotation: { x: 0, y: 90, z: 10 }
 
   - id: "solar_panel_09"
     type: "solar_panel"
-    position: { x: 1.25, y: 10, z: 11.2 }
-    rotation: { x: 0, y: 90, z: 10 }
+    position: { x: 0.795, y: 8.05, z: 5 }
+    rotation: { x: 10, y: 0, z: 0 }
 
   - id: "solar_panel_10"
     type: "solar_panel"
-    position: { x: 2.00, y: 10, z: 11.2 }
-    rotation: { x: 0, y: 90, z: 10 }
+    position: { x: 2.475, y: 8.05, z: 5 }
+    rotation: { x: 10, y: 0, z: 0 }
 
   - id: "solar_panel_11"
     type: "solar_panel"
-    position: { x: 2.75, y: 10, z: 11.2 }
-    rotation: { x: 0, y: 90, z: 10 }
+    position: { x: 4.155, y: 8.05, z: 5 }
+    rotation: { x: 10, y: 0, z: 0 }
 
   - id: "solar_panel_12"
     type: "solar_panel"
-    position: { x: 3.50, y: 10, z: 11.2 }
-    rotation: { x: 0, y: 90, z: 10 }
+    position: { x: 0.795, y: 7.83, z: 3.5 }
+    rotation: { x: 10, y: 0, z: 0 }
 
   - id: "solar_panel_13"
     type: "solar_panel"
-    position: { x: 4.25, y: 10, z: 11.2 }
-    rotation: { x: 0, y: 90, z: 10 }
+    position: { x: 2.475, y: 7.83, z: 3.5 }
+    rotation: { x: 10, y: 0, z: 0 }
 
   - id: "solar_panel_14"
     type: "solar_panel"
-    position: { x: 5.00, y: 10, z: 11.2 }
-    rotation: { x: 0, y: 90, z: 10 }
+    position: { x: 4.155, y: 7.83, z: 3.5 }
+    rotation: { x: 10, y: 0, z: 0 }
 

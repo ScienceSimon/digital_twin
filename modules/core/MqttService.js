@@ -260,8 +260,8 @@ export class MqttService {
     // Nieuwste bericht bovenaan
     container.prepend(entry);
     
-    // Maximaal 50 berichten bewaren (verhoogd van 30)
-    if (container.children.length > 50) {
+    // Maximaal 250
+    if (container.children.length > 250) {
         container.removeChild(container.lastChild);
     }
 }
