@@ -295,6 +295,9 @@ export class MqttService {
     const container = document.getElementById('event-entries');
     if (!container) return;
 
+    // Filter out internetspeeds - too frequent
+    if (entityId === 'dream_machine_special_edition_port_9_rx' || entityId === 'dream_machine_special_edition_port_9_tx') return;
+
     // Filter out netto_stroomverbruik - too frequent
     if (entityId === 'netto_stroomverbruik') return;
 

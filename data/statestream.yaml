@@ -1,4 +1,16 @@
 assets:
   - id: netto_stroomverbruik
     name: "Net Power Usage"
-    position: { x: 5, y: 10, z: 5.5 }
+    position: { x: 2.475, y: 10, z: 5.61 }
+
+  # - id: Heating
+  #   ha_entity: "climate.living_room"
+  #   position: { x: 2.475, y: 11, z: 5.61 }
+
+  # - id: sensor.dream_machine_special_edition_port_9_rx
+  #   name: 'Current Download Speed'
+  #   position: { x: 2.475, y: 12, z: 5.61 }
+
+  # - id: dream_machine_special_edition_port_9_tx
+  #     name: 'Current Upload Speed'
+  #     position: { x: 2.475, y: 12, z: 5.61 }
