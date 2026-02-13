@@ -50,9 +50,9 @@ async function init() {
         state.staticData = allData.static;
         state.metricsData = allData.metrics;
 
-        console.log('🔍 Loaded static data:', state.staticData);
-        console.log('🔍 Is static data an array?', Array.isArray(state.staticData));
-        console.log('🔍 Static data length:', state.staticData?.length);
+        // console.log('🔍 Loaded static data:', state.staticData);
+        // console.log('🔍 Is static data an array?', Array.isArray(state.staticData));
+        // console.log('🔍 Static data length:', state.staticData?.length);
 
         if (!state.houseData) {
             throw new Error("Kritieke fout: house.yaml kon niet worden geladen.");
@@ -78,11 +78,11 @@ async function init() {
                 const blindObject = state.scene.getObjectByName('cover.' + entityId) ||
                         state.scene.getObjectByName(entityId);
 
-                if (isCoverMessage && blindObject) {
-                    console.log(`🔍 Found blind object: ${blindObject.name}, has animateBlinds: ${typeof blindObject.animateBlinds === 'function'}`);
-                } else if (isCoverMessage && !blindObject) {
-                    console.log(`⚠️ Blind object NOT found for: ${entityId} (tried: cover.${entityId} and ${entityId})`);
-                }
+                // if (isCoverMessage && blindObject) {
+                //     console.log(`🔍 Found blind object: ${blindObject.name}, has animateBlinds: ${typeof blindObject.animateBlinds === 'function'}`);
+                // } else if (isCoverMessage && !blindObject) {
+                //     console.log(`⚠️ Blind object NOT found for: ${entityId} (tried: cover.${entityId} and ${entityId})`);
+                // }
 
                 if (blindObject && blindObject.animateBlinds) {
                     try {
@@ -94,7 +94,7 @@ async function init() {
                         if (attribute === 'state') {
                             const openAmount = (value === 'open' || value === 'opening') ? 0.95 : 0;
                             state.blindStates[entityId].openAmount = openAmount;
-                            console.log(`🪟 Animating ${entityId}: state=${value}, openAmount=${openAmount}`);
+                            //console.log(`🪟 Animating ${entityId}: state=${value}, openAmount=${openAmount}`);
                             blindObject.animateBlinds(state.blindStates[entityId].tiltRad, openAmount);
                             return;
                         }
@@ -103,7 +103,7 @@ async function init() {
                             const position = parseFloat(value);
                             const openAmount = position / 100;
                             state.blindStates[entityId].openAmount = openAmount;
-                            console.log(`🪟 Animating ${entityId}: position=${position}%, openAmount=${openAmount}`);
+                            //console.log(`🪟 Animating ${entityId}: position=${position}%, openAmount=${openAmount}`);
                             blindObject.animateBlinds(state.blindStates[entityId].tiltRad, openAmount);
                             return;
                         }
@@ -112,7 +112,7 @@ async function init() {
                             const tiltDeg = parseFloat(value);
                             const tiltRad = (tiltDeg / 100) * (Math.PI / 2);
                             state.blindStates[entityId].tiltRad = tiltRad;
-                            console.log(`🪟 Animating ${entityId}: tilt=${tiltDeg}°, preserving openAmount=${state.blindStates[entityId].openAmount}`);
+                            //console.log(`🪟 Animating ${entityId}: tilt=${tiltDeg}°, preserving openAmount=${state.blindStates[entityId].openAmount}`);
                             blindObject.animateBlinds(tiltRad, state.blindStates[entityId].openAmount);
                             return;
                         }
@@ -209,9 +209,15 @@ async function init() {
         // 6c. Bouw static assets (zonnepanelen, etc.)
         buildAssets(state.staticData, state);
 
-        // 6d. Connect MQTT now that all assets exist
+        // 6d. Asset loading summary
+        const lightCount = state.iotMeshes?.filter(item => item.data.type === 'lamp').length || 0;
+        const blindsCount = state.iotMeshes?.filter(item => item.data.type === 'venetian_blinds').length || 0;
+        const solarCount = state.iotMeshes?.filter(item => item.data.type === 'solar_panel').length || 0;
+        console.log(`✅ Assets geladen: ${lightCount} lampen, ${blindsCount} blinds, ${solarCount} zonnepanelen (${state.scene.children.length} objecten)`);
+
+        // 6e. Connect MQTT now that all assets exist
         if (state.mqtt) {
-            console.log("🔌 Connecting to MQTT after assets are built...");
+            console.log("🔌 Connecting to MQTT...");
             state.mqtt.connect();
         }
 
@@ -318,7 +324,7 @@ async function init() {
         }
 
         // 7b3. Metric labels (electricity, power, etc.)
-        console.log('🔍 Loaded metrics data:', state.metricsData);
+        // console.log('🔍 Loaded metrics data:', state.metricsData);
         if (state.metricsData && Array.isArray(state.metricsData)) {
             state.metricsData.forEach(metric => {
                 const x = metric.position?.x || 0;
@@ -402,21 +408,21 @@ export function updateTemperatureDisplay(sensorId, value, type = 'temperature') 
 }
 
 export function updateLightDisplay(entityId, lightState) {
-    console.log(`updateLightDisplay called for ${entityId}`, lightState);
+    // console.log(`updateLightDisplay called for ${entityId}`, lightState);
 
     if (!state.iotMeshes) {
         console.warn(`state.iotMeshes is not defined`);
         return;
     }
 
-    console.log(`Total meshes in state.iotMeshes: ${state.iotMeshes.length}`);
+    // console.log(`Total meshes in state.iotMeshes: ${state.iotMeshes.length}`);
 
     // Debug: Log all entityIds in iotMeshes
-    state.iotMeshes.forEach((item, idx) => {
-        if (item.mesh && item.mesh.userData && item.mesh.userData.entityId) {
-            console.log(`  [${idx}] entityId: ${item.mesh.userData.entityId}`);
-        }
-    });
+    // state.iotMeshes.forEach((item, idx) => {
+    //     if (item.mesh && item.mesh.userData && item.mesh.userData.entityId) {
+    //         console.log(`  [${idx}] entityId: ${item.mesh.userData.entityId}`);
+    //     }
+    // });
 
     // Zoek de lamp mesh met dit entityId
     const lightMesh = state.iotMeshes.find(item =>
@@ -428,7 +434,7 @@ export function updateLightDisplay(entityId, lightState) {
         return;
     }
 
-    console.log(`Found mesh for ${entityId}, calling updateSpotAppearance`);
+    // console.log(`Found mesh for ${entityId}, calling updateSpotAppearance`);
 
     // Use the centralized model update function from modelFusion.js
     updateSpotAppearance(lightMesh.mesh, lightState);

@@ -9,77 +9,77 @@ import {
     
 export function buildAssets(iotData, state) {
     // Check of er data is en of het een array is
-    console.log('🔧 buildAssets called with:', iotData);
+    // console.log('🔧 buildAssets called with:', iotData);
     if (!iotData) {
-        console.log('⚠️ No iotData provided to buildAssets');
+        // console.log('⚠️ No iotData provided to buildAssets');
         return;
     }
 
     // Omdat je loader 'data.assets' pakt, is iotData hier direct de array
     const assetsArray = Array.isArray(iotData) ? iotData : iotData.assets;
-    console.log('📦 assetsArray:', assetsArray);
+    // console.log('📦 assetsArray:', assetsArray);
     if (!assetsArray) {
-        console.log('⚠️ No assetsArray found');
+        // console.log('⚠️ No assetsArray found');
         return;
     }
-    console.log(`📊 Processing ${assetsArray.length} assets...`);
+    // console.log(`📊 Processing ${assetsArray.length} assets...`);
 
     assetsArray.forEach(asset => {
         let mesh;
 
         if (asset.type === 'solar_panel') {
             mesh = createSolarPanel();
-            console.log(`☀️ Creating solar panel: ${asset.id}`);
-            if (asset.position) {
-                console.log(`   📍 Position: (${asset.position.x}, ${asset.position.y}, ${asset.position.z})`);
-            }
-            if (asset.rotation) {
-                console.log(`   🔄 Rotation: x=${asset.rotation.x}° y=${asset.rotation.y}° z=${asset.rotation.z}°`);
-            }
+            // console.log(`☀️ Creating solar panel: ${asset.id}`);
+            // if (asset.position) {
+            //     console.log(`   📍 Position: (${asset.position.x}, ${asset.position.y}, ${asset.position.z})`);
+            // }
+            // if (asset.rotation) {
+            //     console.log(`   🔄 Rotation: x=${asset.rotation.x}° y=${asset.rotation.y}° z=${asset.rotation.z}°`);
+            // }
         }
 
         if (asset.type === 'venetian_blinds') {
             mesh = createVenetianBlinds(asset);
-            console.log(`🪟 Creating venetian blinds: ${asset.id}`);
-            console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
-            console.log(`   📏 Size: ${asset.width}m x ${asset.height}m`);
-            if (asset.rx || asset.ry || asset.rz) {
-                console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
-            }
+            // console.log(`🪟 Creating venetian blinds: ${asset.id}`);
+            // console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+            // console.log(`   📏 Size: ${asset.width}m x ${asset.height}m`);
+            // if (asset.rx || asset.ry || asset.rz) {
+            //     console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
+            // }
         }
 
         if (asset.type === 'lamp') {
             if (asset.model === 'recessed_spot') {
                 mesh = createRecessedSpot();
-                console.log(`✨ Creating recessed spot: ${asset.id}`);
-                console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+                // console.log(`✨ Creating recessed spot: ${asset.id}`);
+                // console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
             } else if (asset.model === 'cylinder_spot') {
                 mesh = createCylinderSpot();
-                console.log(`✨ Creating cylinder spot: ${asset.id}`);
-                console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
-                if (asset.rx || asset.ry || asset.rz) {
-                    console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
-                }
+                // console.log(`✨ Creating cylinder spot: ${asset.id}`);
+                // console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+                // if (asset.rx || asset.ry || asset.rz) {
+                //     console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
+                // }
             } else if (asset.model === 'sphere') {
                 mesh = createSphereLamp();
-                console.log(`✨ Creating Sphere lamp: ${asset.id}`);
-                console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+                // console.log(`✨ Creating Sphere lamp: ${asset.id}`);
+                // console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
             } else if (asset.model === 'light_tube') {
                 // Pak de lengte uit de asset data, standaard 1 meter
                 const length = asset.length || 1;
                 mesh = createLightTube(length);
-                console.log(`✨ Creating Light Tube (${length}m): ${asset.id}`);
-                console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
-                if (asset.rx || asset.ry || asset.rz) {
-                    console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
-                }
+                // console.log(`✨ Creating Light Tube (${length}m): ${asset.id}`);
+                // console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+                // if (asset.rx || asset.ry || asset.rz) {
+                //     console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
+                // }
             } else if (asset.model === 'bulb') {
                 mesh = createTransparentBulb();
-                console.log(`✨ Creating Transparent Bulb: ${asset.id}`);
-                console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
-                if (asset.rx || asset.ry || asset.rz) {
-                    console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
-                }
+                // console.log(`✨ Creating Transparent Bulb: ${asset.id}`);
+                // console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+                // if (asset.rx || asset.ry || asset.rz) {
+                //     console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
+                // }
             }
 
             if (mesh) {
@@ -129,7 +129,7 @@ export function buildAssets(iotData, state) {
                 mesh.add(light.target);
                 mesh.add(pointLight);
 
-                console.log(`   💡 Light created: "${mesh.name}" - SpotLight + PointLight added`);
+                // console.log(`   💡 Light created: "${mesh.name}" - SpotLight + PointLight added`);
             }
         }
 
@@ -159,9 +159,9 @@ export function buildAssets(iotData, state) {
             state.scene.add(mesh);
 
             // Extra logging voor venetian blinds
-            if (asset.type === 'venetian_blinds') {
-                console.log(`   ✅ Blind added to scene: name="${mesh.name}", has animateBlinds: ${typeof mesh.animateBlinds === 'function'}`);
-            }
+            // if (asset.type === 'venetian_blinds') {
+            //     console.log(`   ✅ Blind added to scene: name="${mesh.name}", has animateBlinds: ${typeof mesh.animateBlinds === 'function'}`);
+            // }
 
             // Sla op in de state voor interactie later
             if (!state.iotMeshes) state.iotMeshes = [];
@@ -169,18 +169,7 @@ export function buildAssets(iotData, state) {
         }
     });
 
-    const lightCount = state.iotMeshes?.filter(item =>
-        item.data.type === 'lamp'
-    ).length || 0;
-
-    const blindsCount = state.iotMeshes?.filter(item =>
-        item.data.type === 'venetian_blinds'
-    ).length || 0;
-
-    console.log(`✅ Asset loading complete:`);
-    console.log(`   💡 Lights created: ${lightCount}`);
-    console.log(`   🪟 Venetian blinds created: ${blindsCount}`);
-    console.log(`   📦 Total scene objects: ${state.scene.children.length}`);
+    // Logging wordt gedaan in main.js na alle assets geladen zijn
 }
 
 function createSolarPanel() {
@@ -282,7 +271,7 @@ export function createVenetianBlinds(data) {
 
     // --- DE LIVE ANIMATIE FUNCTIE ---
     group.animateBlinds = (tiltRad, openFactor) => {
-        console.log(`🎭 animateBlinds: tiltRad=${tiltRad.toFixed(3)}, openFactor=${openFactor}, lamellen=${lamellen.length}`);
+        //console.log(`🎭 animateBlinds: tiltRad=${tiltRad.toFixed(3)}, openFactor=${openFactor}, lamellen=${lamellen.length}`);
 
         lamellen.forEach((lamel, index) => {
             // 1. Geleidelijk kantelen (Tilt)
@@ -291,7 +280,7 @@ export function createVenetianBlinds(data) {
                 duration: 1.5,
                 ease: "power2.inOut",
                 onStart: () => {
-                    if (index === 0) console.log(`🎬 GSAP tilt animation started`);
+                    if (index === 0); //console.log(`🎬 GSAP tilt animation started`);
                 }
             });
 
@@ -301,7 +290,7 @@ export function createVenetianBlinds(data) {
 
             // Log lamel 0, 10, and 30 to see the full range of movement
             if (index === 0 || index === 10 || index === 30) {
-                console.log(`📏 Lamel ${index}: currentY=${lamel.position.y.toFixed(3)}, targetY=${targetY.toFixed(3)}`);
+                //console.log(`📏 Lamel ${index}: currentY=${lamel.position.y.toFixed(3)}, targetY=${targetY.toFixed(3)}`);
             }
 
             gsap.to(lamel.position, {
@@ -310,10 +299,10 @@ export function createVenetianBlinds(data) {
                 delay: index * 0.01,
                 ease: "power3.inOut",
                 onStart: () => {
-                    if (index === 0) console.log(`🎬 GSAP position animation started`);
+                    if (index === 0); //console.log(`🎬 GSAP position animation started`);
                 },
                 onComplete: () => {
-                    if (index === 30) console.log(`✅ GSAP position animation completed - Lamel 30 at y=${lamel.position.y.toFixed(3)}`);
+                    if (index === 30); //console.log(`✅ GSAP position animation completed - Lamel 30 at y=${lamel.position.y.toFixed(3)}`);
                 }
             });
         });

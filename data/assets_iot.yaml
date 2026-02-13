@@ -113,7 +113,7 @@ assets:
     friendly_name: "BedroomSimon"
     type: "temp_motion"
     x: 4.75
-    y: 6.26
+    y: 5.66
     z: 6.07
 
   - id: "hue_motion_sensor_patricia_temperatuur"
@@ -121,7 +121,7 @@ assets:
     friendly_name: "BedroomPatricia"
     type: "temp_motion"
     x: 4.75 
-    y: 6.26
+    y: 5.66
     z: 4.14
 
   # Lights
@@ -286,7 +286,6 @@ assets:
     rz: 0
 
   # Woonkamer Vloerlampen Sphere's
-
   - id: "light.rechts_naast_bank"
     ha_entity: "light.rechts_naast_bank"
     friendly_name: "Living Room rechts naast bank"
@@ -763,6 +762,33 @@ assets:
     rz: 22
   
   # Slaapkamer vloer
+  - id: "light.hue_color_wall_patricia"
+    ha_entity: "light.hue_color_wall_patricia"
+    friendly_name: "light.hue_color_wall_patricia"
+    type: "lamp"
+    model: "light_tube"
+    length: 0.4
+    x: 4.75 
+    y: 6.26
+    z: 4.14
+    rx: 0
+    ry: 0
+    rz: 90
+
+  - id: "light.hue_color_wall_simon"
+    ha_entity: "light.hue_color_wall_simon"
+    friendly_name: "light.hue_color_wall_simon"
+    type: "lamp"
+    model: "light_tube"
+    length: 0.4
+    x: 4.75
+    y: 6.26
+    z: 6.07
+    rx: 0
+    ry: 0
+    rz: 90
+
+
 
   - id: "light.hue_lightstrip_plus_1"
     ha_entity: "light.hue_lightstrip_plus_1"
@@ -1084,7 +1110,7 @@ assets:
     ry: 0
     rz: 0
     width: 0.885
-    height: 2.50
+    height: 2.60
 
   - id: "venetianblind_0011"
     ha_entity: "cover.venetianblind_0011"
@@ -1097,7 +1123,7 @@ assets:
     ry: 0
     rz: 0
     width: 0.885
-    height: 2.50
+    height: 2.60
 
   - id: "venetianblind_0012"
     ha_entity: "cover.venetianblind_0012"
@@ -1110,7 +1136,7 @@ assets:
     ry: 0
     rz: 0
     width: 0.885
-    height: 2.50
+    height: 2.60
 
   - id: "venetianblind_0013"
     ha_entity: "cover.venetianblind_0013"
@@ -1123,4 +1149,17 @@ assets:
     ry: 0
     rz: 0
     width: 0.885
-    height: 2.50
+    height: 2.60
+
+  - id: "venetianblind_0013"
+    ha_entity: "cover.venetianblind_000f"
+    friendly_name: "Kitchen blinds"
+    type: "venetian_blinds"
+    x: 3.365
+    y: 2.42
+    z: 0.07
+    rx: 0
+    ry: 0
+    rz: 0
+    width: 1.77
+    height: 1.42

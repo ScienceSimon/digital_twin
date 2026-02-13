@@ -97,7 +97,7 @@ export class MqttService {
             const brightness = parseInt(message.payloadString);
             if (!isNaN(brightness)) {
                 this.lightAttributes[entityId].brightness = brightness;
-                console.log(`💡 Brightness update for ${entityId}:`, brightness);
+                //console.log(`💡 Brightness update for ${entityId}:`, brightness);
 
                 // Direct update als lamp aan staat
                 if (this.lightAttributes[entityId].isOn && this.onMessageCallback) {
@@ -122,7 +122,7 @@ export class MqttService {
                 if (attributes.brightness !== undefined) {
                     this.lightAttributes[entityId].brightness = attributes.brightness;
                 }
-                console.log(`💾 Stored attributes for ${entityId}:`, this.lightAttributes[entityId]);
+                // console.log(`💾 Stored attributes for ${entityId}:`, this.lightAttributes[entityId]);
             } catch (e) {
                 console.warn(`Failed to parse attributes for ${entityId}:`, e);
             }
@@ -162,13 +162,13 @@ export class MqttService {
         }
 
         // De mooie gekleurde log in je console met RGB visualisatie
-        const rgbDisplay = rgb ? `RGB:[${rgb.join(',')}]` : '';
-        const rgbColorCode = rgb ? `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` : (isOn ? '#ffaa00' : '#333');
+        // const rgbDisplay = rgb ? `RGB:[${rgb.join(',')}]` : '';
+        // const rgbColorCode = rgb ? `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` : (isOn ? '#ffaa00' : '#333');
 
-        console.log(`%c LIGHT %c ${entityId.padEnd(30)} %c ${isOn ? 'ON' : 'OFF'} ${rgbDisplay}`,
-            `background: ${rgbColorCode}; color: white; padding: 2px 5px;`,
-            "color: #888;",
-            `color: ${isOn ? rgbColorCode : '#666'}; font-weight: bold;`);
+        // console.log(`%c LIGHT %c ${entityId.padEnd(30)} %c ${isOn ? 'ON' : 'OFF'} ${rgbDisplay}`,
+        //     `background: ${rgbColorCode}; color: white; padding: 2px 5px;`,
+        //     "color: #888;",
+        //     `color: ${isOn ? rgbColorCode : '#666'}; font-weight: bold;`);
 
         // Voeg toe aan Event Log op scherm
         this._appendToScreenLog('LIGHT', entityId, isOn ? 'ON' : 'OFF');
