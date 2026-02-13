@@ -167,6 +167,30 @@ async function init() {
                     return;
                 }
 
+                // --- Netwerk Logica ---
+                const netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
+
+                if (netwerkContainer && attribute === 'state') {
+                    // Definieer de sensoren
+                    const isDownload = entityId === 'dream_machine_special_edition_port_9_rx';
+                    const isUpload = entityId === 'dream_machine_special_edition_port_9_tx';
+
+                    if (isDownload || isUpload) {
+                        const targetClass = isDownload ? '.download-speed' : '.upload-speed';
+                        const el = netwerkContainer.querySelector(targetClass);
+                        
+                        if (el) {
+                            const val = parseFloat(value);
+                            if (!isNaN(val)) {
+                                // Formatteer naar Mbps, of pas dit aan naar je eigen voorkeur
+                                el.textContent = `${val.toFixed(1)} Mbps`;
+                            } else {
+                                el.textContent = '--';
+                            }
+                        }
+                    }
+                }
+
                 const element = document.getElementById(`temp-pill-${entityId}`) ||
                                 document.querySelector(`[data-binary-ids~="${entityId}"]`);
                 if (!element) return;
@@ -327,6 +351,12 @@ async function init() {
         // console.log('🔍 Loaded metrics data:', state.metricsData);
         if (state.metricsData && Array.isArray(state.metricsData)) {
             state.metricsData.forEach(metric => {
+
+            if (metric && (metric.id === 'dream_machine_special_edition_port_9_rx' || 
+                       metric.id === 'dream_machine_special_edition_port_9_tx')) {
+            return; 
+        }
+           
                 const x = metric.position?.x || 0;
                 const y = metric.position?.y || 0;
                 const z = metric.position?.z || 0;
@@ -335,15 +365,37 @@ async function init() {
                 div.id = `metric-${metric.id}`;
                 div.className = 'metric-label';
                 div.setAttribute('data-metric-id', metric.id);
-                div.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span class="metric-icon" style="font-size: 20px; line-height: 1;">⚡</span>
-                        <div>
-                            <div class="metric-name" style="font-size: 10px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">${metric.name || metric.id}</div>
-                            <div class="metric-value" style="font-size: 16px; font-weight: 600; line-height: 1; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">--</div>
-                        </div>
-                    </div>
-                `;
+                div.setAttribute('data-metric-id', metric.id);
+
+div.innerHTML = `
+    <div style="display: flex; align-items: flex-start; gap: 6px; padding: 4px;">
+        <span class="metric-icon" style="font-size: 20px; line-height: 1; margin-top: 5px;">
+            ${metric.icon || '⚡'}
+        </span>
+        
+        <div style="display: flex; flex-direction: column;">
+            <div class="metric-name" style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                ${metric.name || metric.id}
+            </div>
+            
+            <div class="metric-value" style="font-size: 16px; font-weight: 600; line-height: 1; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                --
+            </div>
+            
+            ${metric.id === 'netto_stroomverbruik' ? `
+            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.2);">
+                <div style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                    Current Internet speeds
+                </div>
+                <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                    <span style="color: #00aaff;">↓ <span class="download-speed">0.0 Mbps</span></span>
+                    <span style="color: #a277ff;">↑ <span class="upload-speed">0.0 Mbps</span></span>
+                </div>
+            </div>
+            ` : ''}
+        </div>
+    </div>
+`;
 
                 const labelObj = new CSS2DObject(div);
                 labelObj.position.set(x, y, z);
