@@ -134,34 +134,37 @@ async function init() {
 
                 // Check for metric labels (power, electricity, etc.)
                 const metricElement = document.querySelector(`[data-metric-id="${entityId}"]`);
-                // console.log('🔍 Metric check:', { entityId, attribute, metricElement: !!metricElement, value });
+
                 if (metricElement && attribute === 'state') {
-                    // console.log('⚡ Updating metric:', entityId, 'value:', value);
                     const valueEl = metricElement.querySelector('.metric-value');
                     const iconEl = metricElement.querySelector('.metric-icon');
-                    // console.log('📊 Metric elements:', { valueEl: !!valueEl, iconEl: !!iconEl });
+                    
                     if (valueEl) {
                         const numValue = parseFloat(value);
                         
-                        // Geforceerde scherpte: haal blur en schaduw weg bij elke update
+                        // --- SCHERPTE FIX ---
+                        // We halen alle filters weg en forceren een schone render-layer
                         valueEl.style.filter = 'none';
+                        valueEl.style.webkitFilter = 'none'; // Veranderd van blur(0px) naar none
                         valueEl.style.textShadow = 'none';
-                        valueEl.style.webkitFilter = 'blur(0px)';
+                        valueEl.style.transform = 'translateZ(0)'; // Forceert hardware acceleratie voor scherpte
+                        valueEl.style.backfaceVisibility = 'hidden';
 
                         if (!isNaN(numValue)) {
+                            // Formatteer de tekst
                             valueEl.textContent = `${numValue.toFixed(2)} kW`;
 
-                            // Bepaal de kleur: Rood bij > 0, anders altijd Groen
-                            const statusColor = (numValue > 0) ? '#ff0000' : '#00ff00';
+                            // --- KLEUR LOGICA ---
+                            // Rood bij verbruik (>0), Groen bij teruglevering/productie (<=0)
+                            const statusColor = (numValue > 0) ? '#ec3c3c' : '#1dbe1d';
 
-                            // Pas de kleur toe op zowel de tekst als het icoon voor een strak resultaat
                             valueEl.style.color = statusColor;
                             if (iconEl) {
                                 iconEl.style.color = statusColor;
                             }
                         } else {
                             valueEl.textContent = value;
-                            valueEl.style.color = '#ffffff'; // Fallback naar wit als het geen getal is
+                            valueEl.style.color = '#ffffff';
                         }
                     }
                     return;
