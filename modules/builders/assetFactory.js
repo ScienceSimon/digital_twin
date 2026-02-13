@@ -282,7 +282,7 @@ export function createVenetianBlinds(data) {
 
     // --- DE LIVE ANIMATIE FUNCTIE ---
     group.animateBlinds = (tiltRad, openFactor) => {
-        console.log(`🎭 animateBlinds: openFactor=${openFactor}, lamellen=${lamellen.length}`);
+        console.log(`🎭 animateBlinds: tiltRad=${tiltRad.toFixed(3)}, openFactor=${openFactor}, lamellen=${lamellen.length}`);
 
         lamellen.forEach((lamel, index) => {
             // 1. Geleidelijk kantelen (Tilt)
@@ -299,8 +299,9 @@ export function createVenetianBlinds(data) {
             // openFactor 0 = helemaal uitgerold (beneden), 1 = opgerold (boven bij 0)
             const targetY = -(index * spacing * (1 - openFactor));
 
-            if (index === 0) {
-                console.log(`📏 Lamel 0: currentY=${lamel.position.y.toFixed(3)}, targetY=${targetY.toFixed(3)}`);
+            // Log lamel 0, 10, and 30 to see the full range of movement
+            if (index === 0 || index === 10 || index === 30) {
+                console.log(`📏 Lamel ${index}: currentY=${lamel.position.y.toFixed(3)}, targetY=${targetY.toFixed(3)}`);
             }
 
             gsap.to(lamel.position, {
@@ -312,14 +313,13 @@ export function createVenetianBlinds(data) {
                     if (index === 0) console.log(`🎬 GSAP position animation started`);
                 },
                 onComplete: () => {
-                    if (index === 0) console.log(`✅ GSAP position animation completed at y=${lamel.position.y.toFixed(3)}`);
+                    if (index === 30) console.log(`✅ GSAP position animation completed - Lamel 30 at y=${lamel.position.y.toFixed(3)}`);
                 }
             });
         });
     };
 
-    group.position.set(data.x, data.y, data.z);
-    group.rotation.y = data.ry || 0;
+    // Position and rotation will be set by buildAssets()
     return group;
 }
 

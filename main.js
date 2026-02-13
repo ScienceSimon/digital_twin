@@ -31,7 +31,8 @@ const state = {
     },
     floorGroups: {},
     wallsFullHeight: false,
-    userLoc: { lat: 52.0, lon: 4.3 } // Default locatie
+    userLoc: { lat: 52.0, lon: 4.3 }, // Default locatie
+    blindStates: {} // Track current position and tilt for each blind
 };
 
 async function init() {
@@ -69,31 +70,50 @@ async function init() {
 
             // Callback instellen
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
+                // Check if this is a cover-related message
+                const isCoverMessage = attribute === 'current_position' ||
+                                      attribute === 'current_tilt_position' ||
+                                      (attribute === 'state' && (value === 'open' || value === 'opening' || value === 'closed' || value === 'closing'));
+
                 const blindObject = state.scene.getObjectByName('cover.' + entityId) ||
                         state.scene.getObjectByName(entityId);
 
+                if (isCoverMessage && blindObject) {
+                    console.log(`🔍 Found blind object: ${blindObject.name}, has animateBlinds: ${typeof blindObject.animateBlinds === 'function'}`);
+                } else if (isCoverMessage && !blindObject) {
+                    console.log(`⚠️ Blind object NOT found for: ${entityId} (tried: cover.${entityId} and ${entityId})`);
+                }
+
                 if (blindObject && blindObject.animateBlinds) {
                     try {
+                        // Initialize blind state if it doesn't exist
+                        if (!state.blindStates[entityId]) {
+                            state.blindStates[entityId] = { openAmount: 0, tiltRad: 0 };
+                        }
+
                         if (attribute === 'state') {
                             const openAmount = (value === 'open' || value === 'opening') ? 0.95 : 0;
+                            state.blindStates[entityId].openAmount = openAmount;
                             console.log(`🪟 Animating ${entityId}: state=${value}, openAmount=${openAmount}`);
-                            blindObject.animateBlinds(0, openAmount);
+                            blindObject.animateBlinds(state.blindStates[entityId].tiltRad, openAmount);
                             return;
                         }
 
                         if (attribute === 'current_position') {
                             const position = parseFloat(value);
                             const openAmount = position / 100;
+                            state.blindStates[entityId].openAmount = openAmount;
                             console.log(`🪟 Animating ${entityId}: position=${position}%, openAmount=${openAmount}`);
-                            blindObject.animateBlinds(0, openAmount);
+                            blindObject.animateBlinds(state.blindStates[entityId].tiltRad, openAmount);
                             return;
                         }
 
                         if (attribute === 'current_tilt_position') {
                             const tiltDeg = parseFloat(value);
                             const tiltRad = (tiltDeg / 100) * (Math.PI / 2);
-                            console.log(`🪟 Animating ${entityId}: tilt=${tiltDeg}°`);
-                            blindObject.animateBlinds(tiltRad, 0);
+                            state.blindStates[entityId].tiltRad = tiltRad;
+                            console.log(`🪟 Animating ${entityId}: tilt=${tiltDeg}°, preserving openAmount=${state.blindStates[entityId].openAmount}`);
+                            blindObject.animateBlinds(tiltRad, state.blindStates[entityId].openAmount);
                             return;
                         }
                     } catch (error) {
@@ -107,19 +127,19 @@ async function init() {
 
                 // Voor lampen: update bij state, rgb_color of brightness changes
                 if (lightMesh && (attribute === 'state' || attribute === 'rgb_color' || attribute === 'brightness')) {
-                    console.log("✅ Lamp gevonden! Updating:", lightMesh.name, value);
+                    // console.log("✅ Lamp gevonden! Updating:", lightMesh.name, value);
                     updateSpotAppearance(lightMesh, value);
                     return;
                 }
 
                 // Check for metric labels (power, electricity, etc.)
                 const metricElement = document.querySelector(`[data-metric-id="${entityId}"]`);
-                console.log('🔍 Metric check:', { entityId, attribute, metricElement: !!metricElement, value });
+                // console.log('🔍 Metric check:', { entityId, attribute, metricElement: !!metricElement, value });
                 if (metricElement && attribute === 'state') {
-                    console.log('⚡ Updating metric:', entityId, 'value:', value);
+                    // console.log('⚡ Updating metric:', entityId, 'value:', value);
                     const valueEl = metricElement.querySelector('.metric-value');
                     const iconEl = metricElement.querySelector('.metric-icon');
-                    console.log('📊 Metric elements:', { valueEl: !!valueEl, iconEl: !!iconEl });
+                    // console.log('📊 Metric elements:', { valueEl: !!valueEl, iconEl: !!iconEl });
                     if (valueEl) {
                         const numValue = parseFloat(value);
                         
@@ -169,7 +189,7 @@ async function init() {
                     }
                 }
             };
-            state.mqtt.connect();
+            // MQTT connect will be called after assets are built
         }
 
         // 5. Locatie & Zon
@@ -188,6 +208,12 @@ async function init() {
 
         // 6c. Bouw static assets (zonnepanelen, etc.)
         buildAssets(state.staticData, state);
+
+        // 6d. Connect MQTT now that all assets exist
+        if (state.mqtt) {
+            console.log("🔌 Connecting to MQTT after assets are built...");
+            state.mqtt.connect();
+        }
 
         // 7. IoT Labels plaatsen
         if (sensorLijst && Array.isArray(sensorLijst)) {

@@ -75,7 +75,7 @@ export class MqttService {
             try {
                 const rgb = JSON.parse(message.payloadString);
                 this.lightAttributes[entityId].rgb = rgb;
-                console.log(`🎨 RGB update for ${entityId}:`, rgb);
+                // console.log(`🎨 RGB update for ${entityId}:`, rgb);
 
                 // Direct update als lamp aan staat
                 if (this.lightAttributes[entityId].isOn && this.onMessageCallback) {
