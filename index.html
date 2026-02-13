@@ -211,6 +211,10 @@
             border-left-color: rgba(80, 80, 80, 0.6);
             box-shadow: -2px 0 6px rgba(80, 80, 80, 0.3);
         }
+        .log-entry.cover {
+            border-left-color: rgba(147, 51, 234, 0.8);
+            box-shadow: -2px 0 6px rgba(147, 51, 234, 0.5);
+        }
 
         /* Timestamps in log entries */
         .log-entry .timestamp {
@@ -253,6 +257,11 @@
         .log-entry.light-off .status-indicator {
             background-color: #404040;
             box-shadow: 0 0 4px rgba(64, 64, 64, 0.4);
+        }
+
+        .log-entry.cover .status-indicator {
+            background-color: #9333ea;
+            box-shadow: 0 0 6px rgba(147, 51, 234, 0.6);
         }
 
         @keyframes slideIn {
@@ -616,6 +625,7 @@
                 <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('temp', this)">Temp</button>
                 <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('motion', this)">Motion</button>
                 <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('lights', this)">Lights</button>
+                <button class="log-control-btn active" onclick="window.eventLog.toggleFilter('covers', this)">Covers</button>
             </div>
         </div>
         <div id="event-entries"></div>
@@ -701,7 +711,7 @@
         // Event Log Controls
         window.eventLog = {
             paused: false,
-            activeFilters: { all: true, temp: true, motion: true, lights: true },
+            activeFilters: { all: true, temp: true, motion: true, lights: true, covers: true },
 
             togglePause: function(btn) {
                 this.paused = !this.paused;
@@ -724,7 +734,7 @@
                     document.querySelectorAll('.log-control-btn').forEach(b => {
                         b.classList.toggle('active', allState);
                     });
-                    this.activeFilters = { all: allState, temp: allState, motion: allState, lights: allState };
+                    this.activeFilters = { all: allState, temp: allState, motion: allState, lights: allState, covers: allState };
                 } else {
                     // If any individual filter is toggled off, turn off "All"
                     if (!this.activeFilters[type]) {
@@ -757,6 +767,7 @@
                         if (this.activeFilters.temp && entry.classList.contains('info')) shouldShow = true;
                         if (this.activeFilters.motion && (entry.classList.contains('success') || entry.classList.contains('error'))) shouldShow = true;
                         if (this.activeFilters.lights && (entry.classList.contains('warning') || entry.classList.contains('light-off'))) shouldShow = true;
+                        if (this.activeFilters.covers && entry.classList.contains('cover')) shouldShow = true;
                     }
 
                     entry.style.display = shouldShow ? 'block' : 'none';
@@ -772,6 +783,7 @@
                 if (this.activeFilters.temp && type === 'TEMP') return true;
                 if (this.activeFilters.motion && type === 'MOTION') return true;
                 if (this.activeFilters.lights && type === 'LIGHT') return true;
+                if (this.activeFilters.covers && type === 'COVER') return true;
                 return false;
             }
         };

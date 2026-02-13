@@ -17,6 +17,9 @@ export class MqttService {
 
         // Bewaar lamp attributes (RGB, brightness) per entityId
         this.lightAttributes = {};
+
+        // Bewaar cover attributes (position, tilt) per entityId
+        this.coverAttributes = {};
     }
 
     connect() {
@@ -56,8 +59,9 @@ export class MqttService {
     const entityId = topicParts[2];
     const attribute = topicParts[3];
 
-    // Check of dit een light entity is
+    // Check of dit een light of cover entity is
     const isLight = topic.includes('/light/');
+    const isCover = topic.includes('/cover/');
 
     // Verwerk individuele attribute topics (rgb_color, brightness)
     if (isLight) {
@@ -126,7 +130,8 @@ export class MqttService {
         }
     }
 
-    if (attribute !== 'state') return;
+    // Voor covers accepteren we ook current_position
+    if (attribute !== 'state' && attribute !== 'current_tilt_position' && attribute !== 'current_position') return;
 
     if (isLight) {
         let isOn = false;
@@ -175,6 +180,95 @@ export class MqttService {
         return; // Stop hier voor lampen
     }
 
+    // Handle cover entities (blinds, shades, etc.)
+    if (isCover) {
+        const payload = message.payloadString.trim();
+
+        // Initialize attributes storage for this cover if needed
+        if (!this.coverAttributes[entityId]) {
+            this.coverAttributes[entityId] = {};
+        }
+
+        // Probeer JSON te parsen (HA stuurt vaak alle attributes in JSON)
+        let coverState = null;
+        let currentPosition = null;
+        let currentTilt = null;
+
+        try {
+            const jsonPayload = JSON.parse(payload);
+            // Check of het een object is met properties, of een primitieve waarde
+            if (typeof jsonPayload === 'object' && jsonPayload !== null) {
+                // JSON object met meerdere attributes
+                coverState = jsonPayload.state;
+                currentPosition = jsonPayload.current_position;
+                currentTilt = jsonPayload.current_tilt_position;
+            } else {
+                // Primitieve waarde (number of string), gebruik attribute om te bepalen wat het is
+                if (attribute === 'state') {
+                    coverState = String(jsonPayload);
+                } else if (attribute === 'current_position') {
+                    currentPosition = typeof jsonPayload === 'number' ? jsonPayload : parseInt(jsonPayload);
+                } else if (attribute === 'current_tilt_position') {
+                    currentTilt = typeof jsonPayload === 'number' ? jsonPayload : parseFloat(jsonPayload);
+                }
+            }
+        } catch (e) {
+            // Geen JSON, gebruik platte tekst
+            if (attribute === 'state') {
+                coverState = payload;
+            } else if (attribute === 'current_position') {
+                currentPosition = parseInt(payload);
+            } else if (attribute === 'current_tilt_position') {
+                currentTilt = parseFloat(payload);
+            }
+        }
+
+        // Store position and tilt als we ze hebben
+        if (currentPosition !== null && currentPosition !== undefined) {
+            this.coverAttributes[entityId].position = currentPosition;
+        }
+        if (currentTilt !== null && currentTilt !== undefined) {
+            this.coverAttributes[entityId].tilt = currentTilt;
+        }
+
+        // Alleen position updates loggen in event log (niet state of tilt)
+        let shouldLog = false;
+        let displayValue = null;
+
+        if (currentPosition !== null && currentPosition !== undefined) {
+            // Format als "Open: X%" of "Closed" als 0%
+            if (currentPosition === 0) {
+                displayValue = 'Closed';
+            } else {
+                displayValue = `Open: ${currentPosition}%`;
+            }
+            shouldLog = true;
+        }
+
+        // Console log (voor debugging, altijd)
+        const debugValue = currentPosition !== null && currentPosition !== undefined ? displayValue :
+                          currentTilt !== null && currentTilt !== undefined ? `tilt: ${Math.round(currentTilt)}°` :
+                          coverState ? coverState : payload;
+
+        console.log(`🪟 COVER %c ${entityId.padEnd(30)} %c ${debugValue}`,
+            "background: #8b4513; color: white; padding: 2px 5px;",
+            "color: #888;");
+
+        // Voeg alleen position updates toe aan Event Log op scherm
+        if (shouldLog && displayValue) {
+            console.log('📝 Adding to event log:', { type: 'COVER', entityId, displayValue });
+            this._appendToScreenLog('COVER', entityId, displayValue);
+        } else {
+            console.log('❌ NOT adding to event log:', { shouldLog, displayValue, currentPosition });
+        }
+
+        // Geef het door aan de 3D scene
+        if (this.onMessageCallback) {
+            this.onMessageCallback(entityId, payload, attribute);
+        }
+        return; // Stop hier voor covers
+    }
+
     const numValue = parseFloat(value);
     const isNumeric = !isNaN(numValue);
 
@@ -217,10 +311,18 @@ export class MqttService {
     if (entityId === 'netto_stroomverbruik') return;
 
     // Check of log gepauzeerd is
-    if (window.eventLog && window.eventLog.isPaused()) return;
+    if (window.eventLog && window.eventLog.isPaused()) {
+        console.log('⏸️ Event log is paused');
+        return;
+    }
 
     // Check of deze entry gefilterd moet worden
-    if (window.eventLog && !window.eventLog.shouldShow(type)) return;
+    const shouldShow = window.eventLog ? window.eventLog.shouldShow(type) : true;
+    console.log('🔍 shouldShow check:', { type, shouldShow, filters: window.eventLog?.activeFilters });
+    if (window.eventLog && !shouldShow) {
+        console.log('🚫 Filtered out by shouldShow');
+        return;
+    }
 
     const friendlyName = this._getFriendlyName(entityId);
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -229,14 +331,17 @@ export class MqttService {
     const isTemp = type === 'TEMP';
     const isLight = type === 'LIGHT';
     const isMotion = type === 'MOTION';
+    const isCover = type === 'COVER';
     const isActive = (value === 'ON' || value === 'OCCUPIED' || value === 'TRUE');
-    
+
     // Kies de juiste CSS class
     let entryClass = 'log-entry';
     if (isTemp) {
         entryClass += ' info'; // Blauw voor temperatuur
     } else if (isLight) {
         entryClass += isActive ? ' warning' : ' light-off'; // Oranje voor ON, grijs voor OFF
+    } else if (isCover) {
+        entryClass += ' cover'; // Paars voor covers
     } else if (isActive) {
         entryClass += ' success'; // Groen voor ON/OCCUPIED
     } else {

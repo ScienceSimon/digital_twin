@@ -6,6 +6,7 @@ import { buildAssets } from './modules/builders/assetFactory.js';
 import { MqttService } from './modules/core/MqttService.js';
 import { CSS2DObject } from 'css2drenderer';
 import { updateSpotAppearance } from './modules/models/modelFusion.js'; 
+import { gsap } from 'https://cdn.skypack.dev/gsap';
 
 const state = {
     scene: null,
@@ -69,6 +70,41 @@ async function init() {
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
                 // Debug: log alle callback calls
                 console.log('🔔 MQTT Callback:', { entityId, value, attribute });
+
+                const blindObject = state.scene.getObjectByName('cover.' + entityId) || 
+                        state.scene.getObjectByName(entityId);
+
+                if (blindObject && blindObject.animateBlinds) {
+                    console.log("✅ Jaloezie gevonden! Updating:", entityId, value);
+
+                    try {
+                        // Scenario A: De hele jaloezie gaat open/dicht (state: 'open' / 'closed')
+                        if (attribute === 'state') {
+                            const openAmount = (value === 'open' || value === 'opening') ? 0.95 : 0;
+                            // animateBlinds(tilt, openAmount) -> we houden tilt op 0 (horizontaal)
+                            blindObject.animateBlinds(0, openAmount);
+                            return;
+                        }
+
+                        // Scenario A2: Positie van de jaloezie (0-100, waarbij 100 = helemaal open)
+                        if (attribute === 'current_position') {
+                            const position = parseFloat(value); // 0-100
+                            const openAmount = position / 100; // 100 = helemaal open (1.0), 0 = dicht (0.0)
+                            blindObject.animateBlinds(0, openAmount);
+                            return;
+                        }
+
+                        // Scenario B: Alleen de lamellen kantelen (tilt)
+                        if (attribute === 'current_tilt_position') {
+                            const tiltDeg = parseFloat(value); // Vaak 0 tot 100 in HA
+                            const tiltRad = (tiltDeg / 100) * (Math.PI / 2); // Omzetten naar radialen
+                            blindObject.animateBlinds(tiltRad, 0);
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('❌ Error animating blinds:', entityId, error);
+                    }
+                }     
 
                 // 1. Zoek de lamp op de meest directe manier
                 const nameWithPrefix = 'light.' + entityId;

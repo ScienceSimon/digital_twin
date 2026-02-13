@@ -1070,3 +1070,57 @@ assets:
     rx: 350
     ry: 0
     rz: 0
+
+    # Jaloezieen
+
+  - id: "venetianblind_0010"
+    ha_entity: "cover.venetianblind_0010"
+    friendly_name: "Livingroom blinds far left"
+    type: "venetian_blinds"
+    x: 3.81
+    y: 0
+    z: 11.15  
+    rx: 0   
+    ry: 0   
+    rz: 0
+    width: 0.885
+    height: 2.50
+
+  - id: "venetianblind_0011"
+    ha_entity: "cover.venetianblind_0011"
+    friendly_name: "Livingroom blinds left"
+    type: "venetian_blinds"
+    x: 2.92
+    y: 0 
+    z: 11.15 
+    rx: 0    
+    ry: 0    
+    rz: 0
+    width: 0.885
+    height: 2.50
+
+  - id: "venetianblind_0012"
+    ha_entity: "cover.venetianblind_0012"
+    friendly_name: "Livingroom blinds right"
+    type: "venetian_blinds"
+    x: 2.02 
+    y: 0
+    z: 11.15 
+    rx: 0    
+    ry: 0    
+    rz: 0
+    width: 0.885
+    height: 2.50
+
+  - id: "venetianblind_0013"
+    ha_entity: "cover.venetianblind_0013"
+    friendly_name: "Livingroom blinds far right"
+    type: "venetian_blinds"
+    x: 1.133  
+    y: 0 
+    z: 11.15  
+    rx: 0   
+    ry: 0  
+    rz: 0
+    width: 0.885
+    height: 2.50

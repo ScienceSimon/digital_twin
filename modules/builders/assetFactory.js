@@ -1,7 +1,8 @@
 import * as THREE from 'three';
-import { 
-    createRecessedSpot, 
-    createCylinderSpot, 
+import { gsap } from 'https://cdn.skypack.dev/gsap';
+import {
+    createRecessedSpot,
+    createCylinderSpot,
     createSphereLamp,
     createLightTube,
     createTransparentBulb, } from '../models/modelFusion.js';
@@ -34,6 +35,16 @@ export function buildAssets(iotData, state) {
             }
             if (asset.rotation) {
                 console.log(`   🔄 Rotation: x=${asset.rotation.x}° y=${asset.rotation.y}° z=${asset.rotation.z}°`);
+            }
+        }
+
+        if (asset.type === 'venetian_blinds') {
+            mesh = createVenetianBlinds(asset);
+            console.log(`🪟 Creating venetian blinds: ${asset.id}`);
+            console.log(`   📍 Position: (${asset.x}, ${asset.y}, ${asset.z})`);
+            console.log(`   📏 Size: ${asset.width}m x ${asset.height}m`);
+            if (asset.rx || asset.ry || asset.rz) {
+                console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
             }
         }
 
@@ -157,8 +168,13 @@ export function buildAssets(iotData, state) {
         item.data.type === 'lamp'
     ).length || 0;
 
+    const blindsCount = state.iotMeshes?.filter(item =>
+        item.data.type === 'venetian_blinds'
+    ).length || 0;
+
     console.log(`✅ Asset loading complete:`);
     console.log(`   💡 Lights created: ${lightCount}`);
+    console.log(`   🪟 Venetian blinds created: ${blindsCount}`);
     console.log(`   📦 Total scene objects: ${state.scene.children.length}`);
 }
 
@@ -225,6 +241,64 @@ function createSolarPanel() {
     glass.position.y = 0.029;
     group.add(glass);
 
+    return group;
+}
+
+// modules/builders/assetFactory.js
+export function createVenetianBlinds(data) {
+    const group = new THREE.Group();
+    group.name = data.ha_entity || data.id;
+
+    const width = data.width || 0.6;
+    const maxHeight = data.height || 2.5;
+    const spacing = 0.08;
+    const numLamel = Math.floor(maxHeight / spacing);
+
+    const lamelGeo = new THREE.BoxGeometry(width, 0.01, 0.06);
+    const lamelMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1612,
+        roughness: 0.8,
+        metalness: 0.0
+    });
+
+    const lamellen = [];
+
+    for (let i = 0; i < numLamel; i++) {
+        const lamelContainer = new THREE.Group(); // Container voor rotatie-as
+        const lamelMesh = new THREE.Mesh(lamelGeo, lamelMat);
+        
+        lamelContainer.add(lamelMesh);
+        lamelContainer.position.y = maxHeight - (i * spacing);
+        
+        group.add(lamelContainer);
+        lamellen.push(lamelContainer);
+    }
+
+    // --- DE LIVE ANIMATIE FUNCTIE ---
+    group.animateBlinds = (tiltRad, openFactor) => {
+        lamellen.forEach((lamel, index) => {
+            // 1. Geleidelijk kantelen (Tilt)
+            gsap.to(lamel.rotation, {
+                x: tiltRad,
+                duration: 1.5,
+                ease: "power2.inOut"
+            });
+
+            // 2. Geleidelijk optrekken (Open/Dicht)
+            // openFactor 0.95 = bijna helemaal boven, 0 = helemaal beneden
+            const targetY = maxHeight - (index * spacing * (1 - openFactor));
+            
+            gsap.to(lamel.position, {
+                y: targetY,
+                duration: 2.5,
+                delay: index * 0.01, // Klein vertragingseffect voor realisme
+                ease: "power3.inOut"
+            });
+        });
+    };
+
+    group.position.set(data.x, data.y, data.z);
+    group.rotation.y = data.ry || 0;
     return group;
 }
 
