@@ -369,16 +369,12 @@ async function init() {
 
 div.innerHTML = `
     <div style="display: flex; align-items: flex-start; gap: 6px; padding: 4px;">
-        <span class="metric-icon" style="font-size: 20px; line-height: 1; margin-top: 5px;">
-            ${metric.icon || '⚡'}
-        </span>
-        
         <div style="display: flex; flex-direction: column;">
             <div class="metric-name" style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
                 ${metric.name || metric.id}
             </div>
             
-            <div class="metric-value" style="font-size: 16px; font-weight: 600; line-height: 1; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+            <div class="metric-value" style="font-size: 11px; font-weight: 600; line-height: 1; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
                 --
             </div>
             
