@@ -245,21 +245,9 @@ export class MqttService {
             shouldLog = true;
         }
 
-        // Console log (voor debugging, altijd)
-        const debugValue = currentPosition !== null && currentPosition !== undefined ? displayValue :
-                          currentTilt !== null && currentTilt !== undefined ? `tilt: ${Math.round(currentTilt)}°` :
-                          coverState ? coverState : payload;
-
-        console.log(`🪟 COVER %c ${entityId.padEnd(30)} %c ${debugValue}`,
-            "background: #8b4513; color: white; padding: 2px 5px;",
-            "color: #888;");
-
         // Voeg alleen position updates toe aan Event Log op scherm
         if (shouldLog && displayValue) {
-            console.log('📝 Adding to event log:', { type: 'COVER', entityId, displayValue });
             this._appendToScreenLog('COVER', entityId, displayValue);
-        } else {
-            console.log('❌ NOT adding to event log:', { shouldLog, displayValue, currentPosition });
         }
 
         // Geef het door aan de 3D scene
@@ -276,8 +264,8 @@ export class MqttService {
     const isMotion = motionWords.includes(value.toLowerCase());
 
     if (isNumeric) {
-        // 1. Console Log
-        console.log(`%c TEMP %c ${entityId.padEnd(30)} %c ${value}`, "background: #1a49f5; color: white; padding: 2px 5px;", "color: #888;", "color: #1a49f5; font-weight: bold;");
+        // 1. Console Log - uitgeschakeld (te veel berichten)
+        // console.log(`%c TEMP %c ${entityId.padEnd(30)} %c ${value}`, "background: #1a49f5; color: white; padding: 2px 5px;", "color: #888;", "color: #1a49f5; font-weight: bold;");
 
         // 2. Scherm Log (Nieuw!)
         this._appendToScreenLog('TEMP', entityId, value);
@@ -288,8 +276,8 @@ export class MqttService {
     else if (isMotion) {
         const motionColor = (value === 'on' || value === 'occupied' || value === 'true') ? '#4cd964' : '#2d5a27';
 
-        // 1. Console Log
-        console.log(`%c MOTION %c ${entityId.padEnd(30)} %c ${value.toUpperCase()}`, `background: ${motionColor}; color: white; padding: 2px 5px;`, "color: #888;", `color: ${motionColor}; font-weight: bold;`);
+        // 1. Console Log - uitgeschakeld (te veel berichten)
+        // console.log(`%c MOTION %c ${entityId.padEnd(30)} %c ${value.toUpperCase()}`, `background: ${motionColor}; color: white; padding: 2px 5px;`, "color: #888;", `color: ${motionColor}; font-weight: bold;`);
 
         // 2. Scherm Log (Nieuw!)
         this._appendToScreenLog('MOTION', entityId, value.toUpperCase());
@@ -311,18 +299,10 @@ export class MqttService {
     if (entityId === 'netto_stroomverbruik') return;
 
     // Check of log gepauzeerd is
-    if (window.eventLog && window.eventLog.isPaused()) {
-        console.log('⏸️ Event log is paused');
-        return;
-    }
+    if (window.eventLog && window.eventLog.isPaused()) return;
 
     // Check of deze entry gefilterd moet worden
-    const shouldShow = window.eventLog ? window.eventLog.shouldShow(type) : true;
-    console.log('🔍 shouldShow check:', { type, shouldShow, filters: window.eventLog?.activeFilters });
-    if (window.eventLog && !shouldShow) {
-        console.log('🚫 Filtered out by shouldShow');
-        return;
-    }
+    if (window.eventLog && !window.eventLog.shouldShow(type)) return;
 
     const friendlyName = this._getFriendlyName(entityId);
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -365,8 +345,8 @@ export class MqttService {
     // Nieuwste bericht bovenaan
     container.prepend(entry);
     
-    // Maximaal 250
-    if (container.children.length > 250) {
+    // Maximaal 100
+    if (container.children.length > 100) {
         container.removeChild(container.lastChild);
     }
 }

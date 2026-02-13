@@ -509,6 +509,18 @@
             pointer-events: none;
         }
 
+        .blind-label {
+            padding: 3px 6px;
+            background: rgba(45, 30, 50, 0.9);
+            border-radius: 4px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 8px;
+            font-weight: 500;
+            color: #b19cd9;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
         .metric-label {
             padding: 5px 8px;
             background: rgba(30, 30, 35, 0.95);
@@ -673,6 +685,10 @@
         <label class="toggle-box">
             <input type="checkbox" onchange="window.engine.toggleLights(this.checked)">
             <span>Light Labels</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" onchange="window.engine.toggleBlinds(this.checked)">
+            <span>Blind Labels</span>
         </label>
         <label class="toggle-box error-toggle">
             <input type="checkbox" checked onchange="window.engine.toggleFailedSensors(this.checked)">

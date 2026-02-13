@@ -26,6 +26,7 @@ const state = {
         binary: [],
         window: [], // Nog niet in gebruik
         lights: [],  // Voor lamp labels
+        blinds: [],  // Voor blind labels
         all: {}
     },
     floorGroups: {},
@@ -68,43 +69,37 @@ async function init() {
 
             // Callback instellen
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
-                // Debug: log alle callback calls
-                console.log('🔔 MQTT Callback:', { entityId, value, attribute });
-
-                const blindObject = state.scene.getObjectByName('cover.' + entityId) || 
+                const blindObject = state.scene.getObjectByName('cover.' + entityId) ||
                         state.scene.getObjectByName(entityId);
 
                 if (blindObject && blindObject.animateBlinds) {
-                    console.log("✅ Jaloezie gevonden! Updating:", entityId, value);
-
                     try {
-                        // Scenario A: De hele jaloezie gaat open/dicht (state: 'open' / 'closed')
                         if (attribute === 'state') {
                             const openAmount = (value === 'open' || value === 'opening') ? 0.95 : 0;
-                            // animateBlinds(tilt, openAmount) -> we houden tilt op 0 (horizontaal)
+                            console.log(`🪟 Animating ${entityId}: state=${value}, openAmount=${openAmount}`);
                             blindObject.animateBlinds(0, openAmount);
                             return;
                         }
 
-                        // Scenario A2: Positie van de jaloezie (0-100, waarbij 100 = helemaal open)
                         if (attribute === 'current_position') {
-                            const position = parseFloat(value); // 0-100
-                            const openAmount = position / 100; // 100 = helemaal open (1.0), 0 = dicht (0.0)
+                            const position = parseFloat(value);
+                            const openAmount = position / 100;
+                            console.log(`🪟 Animating ${entityId}: position=${position}%, openAmount=${openAmount}`);
                             blindObject.animateBlinds(0, openAmount);
                             return;
                         }
 
-                        // Scenario B: Alleen de lamellen kantelen (tilt)
                         if (attribute === 'current_tilt_position') {
-                            const tiltDeg = parseFloat(value); // Vaak 0 tot 100 in HA
-                            const tiltRad = (tiltDeg / 100) * (Math.PI / 2); // Omzetten naar radialen
+                            const tiltDeg = parseFloat(value);
+                            const tiltRad = (tiltDeg / 100) * (Math.PI / 2);
+                            console.log(`🪟 Animating ${entityId}: tilt=${tiltDeg}°`);
                             blindObject.animateBlinds(tiltRad, 0);
                             return;
                         }
                     } catch (error) {
                         console.error('❌ Error animating blinds:', entityId, error);
                     }
-                }     
+                }
 
                 // 1. Zoek de lamp op de meest directe manier
                 const nameWithPrefix = 'light.' + entityId;
@@ -202,8 +197,8 @@ async function init() {
                 const y = parseFloat(sensor.y) || 0;
                 const z = parseFloat(sensor.z) || 0;
 
-                // Skip lamps - die krijgen hun eigen labels
-                if (sensor.type === 'lamp') return;
+                // Skip lamps en blinds - die krijgen geen temperatuur labels
+                if (sensor.type === 'lamp' || sensor.type === 'venetian_blinds') return;
 
                 const div = document.createElement('div');
                 div.id = `temp-pill-${sId}`;
@@ -268,6 +263,34 @@ async function init() {
             });
         }
 
+        // 7b2. Blind Labels plaatsen (alleen naam)
+        if (sensorLijst && Array.isArray(sensorLijst)) {
+            sensorLijst.forEach(blind => {
+                if (blind.type !== 'venetian_blinds') return;
+
+                const x = parseFloat(blind.x) || 0;
+                const y = parseFloat(blind.y) || 0;
+                const z = parseFloat(blind.z) || 0;
+
+                const labelText = blind.friendly_name || blind.ha_entity || blind.id;
+
+                const div = document.createElement('div');
+                div.id = `blind-label-${blind.id}`;
+                div.className = 'blind-label';
+                div.innerHTML = `
+                    <div>${labelText}</div>
+                    <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                        [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                    </div>
+                `;
+
+                const labelObj = new CSS2DObject(div);
+                labelObj.position.set(x, y, z);
+                state.scene.add(labelObj);
+                state.sensorLabels.blinds.push(labelObj);
+            });
+        }
+
         // 7b3. Metric labels (electricity, power, etc.)
         console.log('🔍 Loaded metrics data:', state.metricsData);
         if (state.metricsData && Array.isArray(state.metricsData)) {
@@ -299,9 +322,10 @@ async function init() {
             });
         }
 
-        // 7c. Defaults: light labels en coördinaten uit
+        // 7c. Defaults: light en blind labels uit, coördinaten uit
         state.sensorLabels.lights.forEach(s => s.visible = false);
-        [...state.sensorLabels.temperature, ...state.sensorLabels.lights].forEach(s => {
+        state.sensorLabels.blinds.forEach(s => s.visible = false);
+        [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds].forEach(s => {
             const coord = s.element.querySelector('.coord-display');
             if (coord) coord.style.display = 'none';
         });
@@ -472,6 +496,12 @@ window.engine = {
     toggleLights: (visible) => {
         if (state.sensorLabels.lights) {
             state.sensorLabels.lights.forEach(s => s.visible = visible);
+        }
+    },
+
+    toggleBlinds: (visible) => {
+        if (state.sensorLabels.blinds) {
+            state.sensorLabels.blinds.forEach(s => s.visible = visible);
         }
     },
 

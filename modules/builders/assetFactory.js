@@ -158,6 +158,11 @@ export function buildAssets(iotData, state) {
             // Voeg toe aan de scene
             state.scene.add(mesh);
 
+            // Extra logging voor venetian blinds
+            if (asset.type === 'venetian_blinds') {
+                console.log(`   ✅ Blind added to scene: name="${mesh.name}", has animateBlinds: ${typeof mesh.animateBlinds === 'function'}`);
+            }
+
             // Sla op in de state voor interactie later
             if (!state.iotMeshes) state.iotMeshes = [];
             state.iotMeshes.push({ mesh, data: asset });
@@ -266,33 +271,49 @@ export function createVenetianBlinds(data) {
     for (let i = 0; i < numLamel; i++) {
         const lamelContainer = new THREE.Group(); // Container voor rotatie-as
         const lamelMesh = new THREE.Mesh(lamelGeo, lamelMat);
-        
+
         lamelContainer.add(lamelMesh);
-        lamelContainer.position.y = maxHeight - (i * spacing);
-        
+        // Lamellen hangen naar beneden vanaf bevestigingspunt (y=0 aan plafond)
+        lamelContainer.position.y = -(i * spacing);
+
         group.add(lamelContainer);
         lamellen.push(lamelContainer);
     }
 
     // --- DE LIVE ANIMATIE FUNCTIE ---
     group.animateBlinds = (tiltRad, openFactor) => {
+        console.log(`🎭 animateBlinds: openFactor=${openFactor}, lamellen=${lamellen.length}`);
+
         lamellen.forEach((lamel, index) => {
             // 1. Geleidelijk kantelen (Tilt)
             gsap.to(lamel.rotation, {
                 x: tiltRad,
                 duration: 1.5,
-                ease: "power2.inOut"
+                ease: "power2.inOut",
+                onStart: () => {
+                    if (index === 0) console.log(`🎬 GSAP tilt animation started`);
+                }
             });
 
             // 2. Geleidelijk optrekken (Open/Dicht)
-            // openFactor 0.95 = bijna helemaal boven, 0 = helemaal beneden
-            const targetY = maxHeight - (index * spacing * (1 - openFactor));
-            
+            // openFactor 0 = helemaal uitgerold (beneden), 1 = opgerold (boven bij 0)
+            const targetY = -(index * spacing * (1 - openFactor));
+
+            if (index === 0) {
+                console.log(`📏 Lamel 0: currentY=${lamel.position.y.toFixed(3)}, targetY=${targetY.toFixed(3)}`);
+            }
+
             gsap.to(lamel.position, {
                 y: targetY,
                 duration: 2.5,
-                delay: index * 0.01, // Klein vertragingseffect voor realisme
-                ease: "power3.inOut"
+                delay: index * 0.01,
+                ease: "power3.inOut",
+                onStart: () => {
+                    if (index === 0) console.log(`🎬 GSAP position animation started`);
+                },
+                onComplete: () => {
+                    if (index === 0) console.log(`✅ GSAP position animation completed at y=${lamel.position.y.toFixed(3)}`);
+                }
             });
         });
     };
