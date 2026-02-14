@@ -26,8 +26,8 @@ const state = {
         failed: [],
         binary: [],
         window: [], // Nog niet in gebruik
-        lights: [],  // Voor lamp labels
-        blinds: [],  // Voor blind labels
+        lights: [], 
+        blinds: [], 
         all: {}
     },
     floorGroups: {},
