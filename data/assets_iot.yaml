@@ -453,6 +453,18 @@ assets:
 
 # 1e Etage
 # Office - Spots (Opbouw, hangend ONDER plafond)
+  - id: "light.hue_filament_bulb_13"
+    ha_entity: "light.hue_filament_bulb_13"
+    friendly_name: "Office Sfeerlamp"
+    type: "lamp"
+    model: "sphere"
+    x: 0.3
+    y: 2.66
+    z: 6.60
+    rx: 0
+    ry: 0
+    rz: 0
+
   - id: "hue_color_spot_35"
     ha_entity: "light.hue_color_spot_35"
     friendly_name: "light.hue_color_spot_35"
@@ -762,6 +774,18 @@ assets:
     rz: 22
   
   # Slaapkamer vloer
+  - id: "light.hue_filament_bulb_14"
+    ha_entity: "light.hue_filament_bulb_14"
+    friendly_name: "Slaapkamer Sfeerlamp"
+    type: "lamp"
+    model: "sphere"
+    x: 0.50
+    y: 5.50
+    z: 8.90
+    rx: 0
+    ry: 0
+    rz: 0
+
   - id: "light.hue_color_wall_patricia"
     ha_entity: "light.hue_color_wall_patricia"
     friendly_name: "light.hue_color_wall_patricia"
