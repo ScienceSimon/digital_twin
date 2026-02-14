@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import config from './config.js';
 import { initScene } from './modules/core/scene.js';
 import { loadAllData } from './modules/core/loaders.js';
 import { buildHouse } from './modules/builders/houseBuilder.js';
