@@ -1,4 +1,38 @@
 import * as THREE from 'three';
+import { gsap } from 'https://cdn.skypack.dev/gsap';
+
+/**
+ * Creates a radar beacon with a pulsing effect in the Office
+ */
+export function createRadarBeacon() {
+    const group = new THREE.Group();
+
+    // De vaste kern
+    const coreGeo = new THREE.SphereGeometry(0.08, 32, 32);
+    const coreMat = new THREE.MeshStandardMaterial({ 
+        color: 0x00aaff, 
+        emissive: 0x00ff00,
+        emissiveIntensity: 3 
+    });
+    const core = new THREE.Mesh(coreGeo, coreMat);
+    group.add(core);
+
+    // De pulserende ring
+    const ringGeo = new THREE.SphereGeometry(0.1, 32, 32);
+    const ringMat = new THREE.MeshBasicMaterial({ 
+        color: 0x00ffff, 
+        transparent: true, 
+        opacity: 0.6 
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    group.add(ring);
+
+    // Animatie (GSAP moet wel beschikbaar zijn in dit bestand)
+    gsap.to(ring.scale, { x: 4, y: 4, z: 4, duration: 2, repeat: -1, ease: "power2.out" });
+    gsap.to(ringMat, { opacity: 0, duration: 2, repeat: -1, ease: "power2.out" });
+
+    return group;
+}
 
 /**
  * Creates a transparent glass bulb with a filament inside

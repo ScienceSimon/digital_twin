@@ -6,8 +6,9 @@ import { buildHouse } from './modules/builders/houseBuilder.js';
 import { buildAssets } from './modules/builders/assetFactory.js';
 import { MqttService } from './modules/core/MqttService.js';
 import { CSS2DObject } from 'css2drenderer';
-import { updateSpotAppearance } from './modules/models/modelFusion.js'; 
+import { updateSpotAppearance, createRadarBeacon } from './modules/models/modelFusion.js'; 
 import { gsap } from 'https://cdn.skypack.dev/gsap';
+
 
 const state = {
     scene: null,
@@ -32,8 +33,9 @@ const state = {
     },
     floorGroups: {},
     wallsFullHeight: false,
-    userLoc: { lat: 52.0, lon: 4.3 }, // Default locatie
-    blindStates: {} // Track current position and tilt for each blind
+    userLoc: { lat: 52.0, lon: 4.3 },
+    blindStates: {},
+    sunOffset: 1.15 * Math.PI,
 };
 
 async function init() {
@@ -50,6 +52,17 @@ async function init() {
         state.iotData    = allData.iot;
         state.staticData = allData.static;
         state.metricsData = allData.metrics;
+        
+        if (!state.iotMeshes) {
+            state.iotMeshes = [];
+        }
+        const mijnRadar = createRadarBeacon();
+        state.scene.add(mijnRadar);
+
+        state.iotMeshes.push({
+            mesh: mijnRadar,
+            data: { id: 'radar_office_position' }
+        });
 
         // console.log('🔍 Loaded static data:', state.staticData);
         // console.log('🔍 Is static data an array?', Array.isArray(state.staticData));
@@ -71,6 +84,31 @@ async function init() {
 
             // Callback instellen
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
+                if (entityId === 'Radar_Location/Office') {
+                    try {
+                    // 2. Parse de JSON data {"x": ..., "y": ..., "z": ...}
+                    const coords = JSON.parse(value);
+
+                    // 3. Zoek het baken op ID (Moet matchen met je YAML!)
+                    const beaconEntry = state.iotMeshes.find(item => item.data.id === 'radar_office_position');
+
+                    if (beaconEntry) {
+                        // 4. DE BEWEGING: Verplaats de mesh naar de nieuwe coordinaten
+                        // Let op: controleer of coords.x en coords.z bestaan!
+                        beaconEntry.mesh.position.set(
+                            parseFloat(coords.x), 
+                            parseFloat(coords.y), 
+                            parseFloat(coords.z)
+                        );
+                                              
+                    } else {
+                        console.warn("Kon geen 3D object vinden met ID: radar_office_position");
+                    }
+                } catch (e) {
+                    console.error("Fout bij koppelen data aan baken:", e);
+                }
+            }
+
                 // Check if this is a cover-related message
                 const isCoverMessage = attribute === 'current_position' ||
                                       attribute === 'current_tilt_position' ||
@@ -119,6 +157,31 @@ async function init() {
                         }
                     } catch (error) {
                         console.error('❌ Error animating blinds:', entityId, error);
+                    }
+                }
+
+                // --- Radar / Locatie Logica ---
+                if (entityId === 'Radar_Location/Office') {
+                    try {
+                        // De data is al een object {x, y, z}, maar we checken het voor de zekerheid
+                        const coords = typeof value === 'string' ? JSON.parse(value) : value;
+
+                        // 2. Zoek de mesh van het baken in je 3D scene
+                        // We gebruiken nog steeds het ID 'radar_office_position' zoals in je assets_iot.yaml
+                        const beaconEntry = state.iotMeshes.find(item => item.data.id === 'radar_office_position');
+
+                        if (beaconEntry && coords.x && coords.z) {
+                            // 3. Verplaats het baken soepel naar de nieuwe plek
+                            gsap.to(beaconEntry.mesh.position, {
+                                x: parseFloat(coords.x),
+                                y: parseFloat(coords.y), 
+                                z: parseFloat(coords.z),
+                                duration: 0.2,
+                                ease: "power1.out"
+                            });
+                                                    }
+                    } catch (e) {
+                        console.error("Fout bij het verwerken van de XYZ data:", e);
                     }
                 }
 
@@ -513,11 +576,12 @@ function updateSun(hour) {
     const latRad = state.userLoc.lat * Math.PI / 180;
     const altitude = Math.asin(Math.sin(latRad) * Math.sin(-0.2) + Math.cos(latRad) * Math.cos(-0.2) * Math.cos(hourAngle));
     const azimuth = Math.acos((Math.sin(-0.2) - Math.sin(altitude) * Math.sin(latRad)) / (Math.cos(altitude) * Math.cos(latRad))) * (hour > 12 ? 1 : -1);
-
+    const finalAzimuth = azimuth + (state.sunOffset || 0);
+    
     const r = 50;
-    const x = r * Math.cos(altitude) * Math.sin(azimuth);
+    const x = r * Math.cos(altitude) * Math.sin(finalAzimuth);
     const y = r * Math.sin(altitude);
-    const z = r * Math.cos(altitude) * Math.cos(azimuth);
+    const z = r * Math.cos(altitude) * Math.cos(finalAzimuth);
 
     state.sunLight.position.set(x, y, z);
     state.sunSphere.position.set(x, y, z);

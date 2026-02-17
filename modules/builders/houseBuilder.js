@@ -415,12 +415,12 @@ function buildStairs(_, parentGroup) {
     // Main run goes south (z+) to z=4.8 at y=1.785
     // Left turn 90° then climbs east to exit at [1.01, 5.14]-[1.01, 6.07] at y=2.63
     {
-        const riser = 2.63 / 15;
+        const riser = 2.633 / 15;
         const stairW = 0.93; // x: 0.04 to 0.97
         const stairCenterX = 0.505;
 
         // Main run: 10 steps going south (z increasing), full width
-        const mainTread = 0.21; // (4.8 - 2.7) / 10
+        const mainTread = 0.258;
         for (let i = 0; i < 10; i++) {
             addStep(
                 stairCenterX,               // x center
@@ -437,9 +437,9 @@ function buildStairs(_, parentGroup) {
         // Shape XY maps to scene XZ: shape X = scene X offset, shape Y = scene Z offset
         // Wide end sweeps from west (angle π in shape = -X = toward x=0.04)
         //   to south (angle π/2 in shape = +Y = toward z=5.73)
-        const landingY = 10 * riser; // ~1.753
-        const pivotX = 0.97;
-        const pivotZ = 4.80;
+        const landingY = 11 * riser; // ~1.753
+        const pivotX = 1.01;
+        const pivotZ = 5.1;
         const innerR = 0.06;
         const outerR = 0.93; // reaches x=0.04 at angle π
         const totalAngle = Math.PI / 2; // 90 degrees
@@ -484,6 +484,84 @@ function buildStairs(_, parentGroup) {
             stairsGroup.add(mesh);
         }
     }
+
+    // === TRAP 2: Eerste verdieping -> Tweede verdieping ===
+{
+    const level1Height = 2.633;
+    const riser = 2.633 / 15;
+    const stairW = 0.93;
+    const stairCenterX = 0.505;
+    const mainTread = 0.25;
+
+    // 1. RECHTE STUK
+    for (let i = 0; i < 5; i++) {
+        addStep(
+            stairCenterX,
+            level1Height + (5 * riser) + i * riser,
+            4 + i * mainTread,
+            stairW,
+            riser,
+            mainTread
+        );
+    } 
+
+    // 2. BOVENSTE DRAAI
+    {
+        const landingY = 11 * riser + level1Height;
+        const pivotX = 1.01;
+        const pivotZ = 5.1;
+        const innerR = 0.06;
+        const outerR = 0.93;
+        const totalAngle = Math.PI / 2;
+        const stepAngle = totalAngle / 5;
+
+        for (let i = 0; i < 5; i++) {
+            const startAngle = Math.PI - i * stepAngle;
+            const endAngle = Math.PI - (i + 1) * stepAngle;
+
+            const shape = new THREE.Shape();
+            shape.moveTo(innerR * Math.cos(startAngle), innerR * Math.sin(startAngle));
+            shape.lineTo(outerR * Math.cos(startAngle), outerR * Math.sin(startAngle));
+            shape.absarc(0, 0, outerR, startAngle, endAngle, true);
+            shape.lineTo(innerR * Math.cos(endAngle), innerR * Math.sin(endAngle));
+            shape.absarc(0, 0, innerR, endAngle, startAngle, false);
+
+            const geom = new THREE.ExtrudeGeometry(shape, { depth: riser, bevelEnabled: false });
+            const mesh = new THREE.Mesh(geom, material);
+            mesh.rotation.x = Math.PI / 2;
+            mesh.position.set(pivotX, landingY + i * riser, pivotZ);
+            stairsGroup.add(mesh);
+        }
+    }
+
+    // 3. ONDERSTE DRAAI
+    {
+        const landingY2 = 1 * riser + level1Height;
+        const pivotX2 = 1.01; 
+        const pivotZ2 = 3.90;
+        const innerR2 = 0.06;
+        const outerR2 = 0.93;
+        const stepAngle2 = (Math.PI / 2) / 5;
+
+        for (let i = 0; i < 5; i++) {
+            const startAngle = (1.5 * Math.PI) - i * stepAngle2;
+            const endAngle = (1.5 * Math.PI) - (i + 1) * stepAngle2;
+
+            const shape = new THREE.Shape();
+            shape.moveTo(innerR2 * Math.cos(startAngle), innerR2 * Math.sin(startAngle));
+            shape.lineTo(outerR2 * Math.cos(startAngle), outerR2 * Math.sin(startAngle));
+            shape.absarc(0, 0, outerR2, startAngle, endAngle, true);
+            shape.lineTo(innerR2 * Math.cos(endAngle), innerR2 * Math.sin(endAngle));
+            shape.absarc(0, 0, innerR2, endAngle, startAngle, false);
+
+            const geom = new THREE.ExtrudeGeometry(shape, { depth: riser, bevelEnabled: false });
+            const mesh = new THREE.Mesh(geom, material);
+            mesh.rotation.x = Math.PI / 2;
+            mesh.position.set(pivotX2, landingY2 + i * riser, pivotZ2);
+            stairsGroup.add(mesh);
+        }
+    }
+} // Sluit het hele TRAP 2 blok
 
     parentGroup.add(stairsGroup);
 }
