@@ -32,8 +32,9 @@ const state = {
     },
     floorGroups: {},
     wallsFullHeight: false,
-    userLoc: { lat: 52.0, lon: 4.3 }, // Default locatie
-    blindStates: {} // Track current position and tilt for each blind
+    userLoc: { lat: 52.0, lon: 4.3 },
+    blindStates: {},
+    sunOffset: 1.15 * Math.PI,
 };
 
 async function init() {
@@ -513,11 +514,12 @@ function updateSun(hour) {
     const latRad = state.userLoc.lat * Math.PI / 180;
     const altitude = Math.asin(Math.sin(latRad) * Math.sin(-0.2) + Math.cos(latRad) * Math.cos(-0.2) * Math.cos(hourAngle));
     const azimuth = Math.acos((Math.sin(-0.2) - Math.sin(altitude) * Math.sin(latRad)) / (Math.cos(altitude) * Math.cos(latRad))) * (hour > 12 ? 1 : -1);
-
+    const finalAzimuth = azimuth + (state.sunOffset || 0);
+    
     const r = 50;
-    const x = r * Math.cos(altitude) * Math.sin(azimuth);
+    const x = r * Math.cos(altitude) * Math.sin(finalAzimuth);
     const y = r * Math.sin(altitude);
-    const z = r * Math.cos(altitude) * Math.cos(azimuth);
+    const z = r * Math.cos(altitude) * Math.cos(finalAzimuth);
 
     state.sunLight.position.set(x, y, z);
     state.sunSphere.position.set(x, y, z);
