@@ -33,8 +33,8 @@ export class MqttService {
                 this.client.subscribe("homeassistant/#");
                 this.client.subscribe("Radar_Location/#");
             },
-            onFailure: (err) => {
-                console.error("MQTT: Verbinding mislukt", err);
+            onFailure: () => {
+                // Connection failure
             }
         };
 
@@ -84,8 +84,6 @@ export class MqttService {
             try {
                 const rgb = JSON.parse(message.payloadString);
                 this.lightAttributes[entityId].rgb = rgb;
-                // console.log(`🎨 RGB update for ${entityId}:`, rgb);
-
                 // Direct update als lamp aan staat
                 if (this.lightAttributes[entityId].isOn && this.onMessageCallback) {
                     const brightness = this.lightAttributes[entityId].brightness || 255;
@@ -96,7 +94,7 @@ export class MqttService {
                     }, 'rgb_color');
                 }
             } catch (e) {
-                console.warn(`Failed to parse rgb_color for ${entityId}:`, e);
+                // RGB parse error
             }
             return;
         }
@@ -106,8 +104,6 @@ export class MqttService {
             const brightness = parseInt(message.payloadString);
             if (!isNaN(brightness)) {
                 this.lightAttributes[entityId].brightness = brightness;
-                //console.log(`💡 Brightness update for ${entityId}:`, brightness);
-
                 // Direct update als lamp aan staat
                 if (this.lightAttributes[entityId].isOn && this.onMessageCallback) {
                     const rgb = this.lightAttributes[entityId].rgb || null;
@@ -131,9 +127,8 @@ export class MqttService {
                 if (attributes.brightness !== undefined) {
                     this.lightAttributes[entityId].brightness = attributes.brightness;
                 }
-                // console.log(`💾 Stored attributes for ${entityId}:`, this.lightAttributes[entityId]);
             } catch (e) {
-                console.warn(`Failed to parse attributes for ${entityId}:`, e);
+                // Attributes parse error
             }
             return;
         }
@@ -171,14 +166,6 @@ export class MqttService {
         }
 
         // De mooie gekleurde log in je console met RGB visualisatie
-        // const rgbDisplay = rgb ? `RGB:[${rgb.join(',')}]` : '';
-        // const rgbColorCode = rgb ? `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})` : (isOn ? '#ffaa00' : '#333');
-
-        // console.log(`%c LIGHT %c ${entityId.padEnd(30)} %c ${isOn ? 'ON' : 'OFF'} ${rgbDisplay}`,
-        //     `background: ${rgbColorCode}; color: white; padding: 2px 5px;`,
-        //     "color: #888;",
-        //     `color: ${isOn ? rgbColorCode : '#666'}; font-weight: bold;`);
-
         // Voeg toe aan Event Log op scherm
         this._appendToScreenLog('LIGHT', entityId, isOn ? 'ON' : 'OFF');
 
@@ -273,10 +260,7 @@ export class MqttService {
     const isMotion = motionWords.includes(value.toLowerCase());
 
     if (isNumeric) {
-        // 1. Console Log - uitgeschakeld (te veel berichten)
-        // console.log(`%c TEMP %c ${entityId.padEnd(30)} %c ${value}`, "background: #1a49f5; color: white; padding: 2px 5px;", "color: #888;", "color: #1a49f5; font-weight: bold;");
-
-        // 2. Scherm Log (Nieuw!)
+        // Scherm Log
         this._appendToScreenLog('TEMP', entityId, value);
 
         // 3. 3D Labels update
@@ -285,10 +269,7 @@ export class MqttService {
     else if (isMotion) {
         const motionColor = (value === 'on' || value === 'occupied' || value === 'true') ? '#4cd964' : '#2d5a27';
 
-        // 1. Console Log - uitgeschakeld (te veel berichten)
-        // console.log(`%c MOTION %c ${entityId.padEnd(30)} %c ${value.toUpperCase()}`, `background: ${motionColor}; color: white; padding: 2px 5px;`, "color: #888;", `color: ${motionColor}; font-weight: bold;`);
-
-        // 2. Scherm Log (Nieuw!)
+        // Scherm Log
         this._appendToScreenLog('MOTION', entityId, value.toUpperCase());
 
         // 3. 3D Labels update
