@@ -64,10 +64,6 @@ async function init() {
             data: { id: 'radar_office_position' }
         });
 
-        // console.log('🔍 Loaded static data:', state.staticData);
-        // console.log('🔍 Is static data an array?', Array.isArray(state.staticData));
-        // console.log('🔍 Static data length:', state.staticData?.length);
-
         if (!state.houseData) {
             throw new Error("Kritieke fout: house.yaml kon niet worden geladen.");
         }
@@ -101,11 +97,9 @@ async function init() {
                             parseFloat(coords.z)
                         );
                                               
-                    } else {
-                        console.warn("Kon geen 3D object vinden met ID: radar_office_position");
                     }
                 } catch (e) {
-                    console.error("Fout bij koppelen data aan baken:", e);
+                    // Silently ignore radar parse errors
                 }
             }
 
@@ -117,12 +111,6 @@ async function init() {
                 const blindObject = state.scene.getObjectByName('cover.' + entityId) ||
                         state.scene.getObjectByName(entityId);
 
-                // if (isCoverMessage && blindObject) {
-                //     console.log(`🔍 Found blind object: ${blindObject.name}, has animateBlinds: ${typeof blindObject.animateBlinds === 'function'}`);
-                // } else if (isCoverMessage && !blindObject) {
-                //     console.log(`⚠️ Blind object NOT found for: ${entityId} (tried: cover.${entityId} and ${entityId})`);
-                // }
-
                 if (blindObject && blindObject.animateBlinds) {
                     try {
                         // Initialize blind state if it doesn't exist
@@ -133,7 +121,6 @@ async function init() {
                         if (attribute === 'state') {
                             const openAmount = (value === 'open' || value === 'opening') ? 0.95 : 0;
                             state.blindStates[entityId].openAmount = openAmount;
-                            //console.log(`🪟 Animating ${entityId}: state=${value}, openAmount=${openAmount}`);
                             blindObject.animateBlinds(state.blindStates[entityId].tiltRad, openAmount);
                             return;
                         }
@@ -142,7 +129,6 @@ async function init() {
                             const position = parseFloat(value);
                             const openAmount = position / 100;
                             state.blindStates[entityId].openAmount = openAmount;
-                            //console.log(`🪟 Animating ${entityId}: position=${position}%, openAmount=${openAmount}`);
                             blindObject.animateBlinds(state.blindStates[entityId].tiltRad, openAmount);
                             return;
                         }
@@ -151,12 +137,11 @@ async function init() {
                             const tiltDeg = parseFloat(value);
                             const tiltRad = (tiltDeg / 100) * (Math.PI / 2);
                             state.blindStates[entityId].tiltRad = tiltRad;
-                            //console.log(`🪟 Animating ${entityId}: tilt=${tiltDeg}°, preserving openAmount=${state.blindStates[entityId].openAmount}`);
                             blindObject.animateBlinds(tiltRad, state.blindStates[entityId].openAmount);
                             return;
                         }
                     } catch (error) {
-                        console.error('❌ Error animating blinds:', entityId, error);
+                        // Blind animation error
                     }
                 }
 
@@ -181,7 +166,7 @@ async function init() {
                             });
                                                     }
                     } catch (e) {
-                        console.error("Fout bij het verwerken van de XYZ data:", e);
+                        // XYZ parse error
                     }
                 }
 
@@ -191,7 +176,6 @@ async function init() {
 
                 // Voor lampen: update bij state, rgb_color of brightness changes
                 if (lightMesh && (attribute === 'state' || attribute === 'rgb_color' || attribute === 'brightness')) {
-                    // console.log("✅ Lamp gevonden! Updating:", lightMesh.name, value);
                     updateSpotAppearance(lightMesh, value);
                     return;
                 }
@@ -415,7 +399,6 @@ async function init() {
         }
 
         // 7b3. Metric labels (electricity, power, etc.)
-        // console.log('🔍 Loaded metrics data:', state.metricsData);
         if (state.metricsData && Array.isArray(state.metricsData)) {
             state.metricsData.forEach(metric => {
 
@@ -483,7 +466,7 @@ div.innerHTML = `
         console.log("Digital Twin succesvol geïnitialiseerd.");
 
     } catch (err) {
-        console.error("Fout bij initialisatie:", err);
+        // Initialization error
     }
 }
   
@@ -523,21 +506,9 @@ export function updateTemperatureDisplay(sensorId, value, type = 'temperature') 
 }
 
 export function updateLightDisplay(entityId, lightState) {
-    // console.log(`updateLightDisplay called for ${entityId}`, lightState);
-
     if (!state.iotMeshes) {
-        console.warn(`state.iotMeshes is not defined`);
         return;
     }
-
-    // console.log(`Total meshes in state.iotMeshes: ${state.iotMeshes.length}`);
-
-    // Debug: Log all entityIds in iotMeshes
-    // state.iotMeshes.forEach((item, idx) => {
-    //     if (item.mesh && item.mesh.userData && item.mesh.userData.entityId) {
-    //         console.log(`  [${idx}] entityId: ${item.mesh.userData.entityId}`);
-    //     }
-    // });
 
     // Zoek de lamp mesh met dit entityId
     const lightMesh = state.iotMeshes.find(item =>
@@ -545,11 +516,8 @@ export function updateLightDisplay(entityId, lightState) {
     );
 
     if (!lightMesh) {
-        console.warn(`No mesh found for entityId: ${entityId}`);
         return;
     }
-
-    // console.log(`Found mesh for ${entityId}, calling updateSpotAppearance`);
 
     // Use the centralized model update function from modelFusion.js
     updateSpotAppearance(lightMesh.mesh, lightState);

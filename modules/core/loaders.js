@@ -21,17 +21,8 @@ export async function loadAllData() {
             // Veilig laden: als het bestand leeg is, maken we er een leeg object van
             const data = jsyaml.load(yamlText) || {};
 
-            // console.log(`📄 Raw YAML data for ${key}:`, data);
-            // console.log(`📄 data.house:`, data?.house);
-            // console.log(`📄 data.assets:`, data?.assets);
-
-            // De 'results' vullen we veilig met optional chaining (?.)
             results[key] = data?.house || data?.assets || data || {};
-
-            // console.log(`✅ Geladen: ${key}`, results[key]);
         } catch (err) {
-            // Dit zorgt ervoor dat de oranje waarschuwing netjes blijft en de app doorgaat
-            console.warn(`Kon ${key} niet laden (optioneel):`, err.message);
             results[key] = {}; 
         }
     }
