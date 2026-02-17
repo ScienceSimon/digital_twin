@@ -10,7 +10,8 @@ export function initScene() {
     camera.position.set(15, 15, 15);
     
     // De standaard 3D renderer
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: window.devicePixelRatio < 2 });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.shadowMap.enabled = true;
     document.body.appendChild(renderer.domElement);
@@ -32,7 +33,7 @@ export function initScene() {
 
     const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
     sunLight.castShadow = true;
-    sunLight.shadow.mapSize.set(2048, 2048);
+    sunLight.shadow.mapSize.set(1024, 1024);
     scene.add(sunLight);
     
     const sunSphere = new THREE.Mesh(

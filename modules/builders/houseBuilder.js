@@ -3,6 +3,32 @@ import { CSS2DObject } from 'css2drenderer';
 
 const WALL_THICKNESS = 0.08;
 
+// Shared materials (created once, reused across all rooms)
+const _ceilingMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee, side: THREE.DoubleSide });
+const _slopedCeilingMat = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const _windowFrameMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
+
+// Glass materials cached by glass_type
+const _glassMaterials = {
+    "clear": new THREE.MeshPhongMaterial({ color: 0x88ccff, transparent: true, opacity: 0.2, side: THREE.DoubleSide, shininess: 100 }),
+    "black": new THREE.MeshPhongMaterial({ color: 0x111111, transparent: true, opacity: 0.8, side: THREE.DoubleSide, shininess: 100 }),
+    "smoke": new THREE.MeshPhongMaterial({ color: 0x444444, transparent: true, opacity: 0.2, side: THREE.DoubleSide, shininess: 100 })
+};
+
+// Floor material cache (keyed by floor_type, built lazily)
+const _floorMatCache = {};
+
+function _getFloorMaterial(floorType) {
+    if (_floorMatCache[floorType]) return _floorMatCache[floorType];
+    const floorDef = FLOOR_MATERIALS[floorType] || FLOOR_MATERIALS['default'];
+    _floorMatCache[floorType] = new THREE.MeshPhongMaterial({
+        color: floorDef.color,
+        side: THREE.DoubleSide,
+        shininess: floorDef.metalness > 0 ? 30 : 5
+    });
+    return _floorMatCache[floorType];
+}
+
 // Floor material library - verschillende vloertypen
 const FLOOR_MATERIALS = {
     'wood': {
@@ -139,30 +165,23 @@ function createWindow(win, yBase) {
     const zMax = win.z_max !== undefined ? win.z_max : 2.1;
     const h = zMax - zMin;
 
-    const glassLibrary = {
-        "clear": { color: 0x88ccff, opacity: 0.2 },
-        "black": { color: 0x111111, opacity: 0.8 },
-        "smoke": { color: 0x444444, opacity: 0.2 }
-    };
-    const settings = glassLibrary[win.glass_type] || glassLibrary["clear"];
     const group = new THREE.Group();
-
+    const glassMat = _glassMaterials[win.glass_type] || _glassMaterials["clear"];
     const glass = new THREE.Mesh(
         new THREE.BoxGeometry(len, h, 0.02),
-        new THREE.MeshPhongMaterial({ color: settings.color, transparent: true, opacity: settings.opacity, side: THREE.DoubleSide, shininess: 100 })
+        glassMat
     );
     glass.position.y = h / 2;
     group.add(glass);
 
-    const frameMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
     const frameT = 0.05, frameDepth = WALL_THICKNESS + 0.01;
     const horGeom = new THREE.BoxGeometry(len, frameT, frameDepth);
     const vertGeom = new THREE.BoxGeometry(frameT, h, frameDepth);
 
-    const top = new THREE.Mesh(horGeom, frameMat); top.position.y = h; group.add(top);
-    const bot = new THREE.Mesh(horGeom, frameMat); bot.position.y = 0; group.add(bot);
-    const left = new THREE.Mesh(vertGeom, frameMat); left.position.set(-len/2 + frameT/2, h/2, 0); group.add(left);
-    const right = new THREE.Mesh(vertGeom, frameMat); right.position.set(len/2 - frameT/2, h/2, 0); group.add(right);
+    const top = new THREE.Mesh(horGeom, _windowFrameMat); top.position.y = h; group.add(top);
+    const bot = new THREE.Mesh(horGeom, _windowFrameMat); bot.position.y = 0; group.add(bot);
+    const left = new THREE.Mesh(vertGeom, _windowFrameMat); left.position.set(-len/2 + frameT/2, h/2, 0); group.add(left);
+    const right = new THREE.Mesh(vertGeom, _windowFrameMat); right.position.set(len/2 - frameT/2, h/2, 0); group.add(right);
 
     group.position.set((start[0] + end[0]) / 2, yBase + zMin, (start[1] + end[1]) / 2);
     group.rotation.y = -Math.atan2(dy, dx);
@@ -171,7 +190,6 @@ function createWindow(win, yBase) {
 
 function buildSlopedCeiling(room, yBase, profile) {
     const group = new THREE.Group();
-    const material = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
     const zPoints = profile.points.map(p => p.z).sort((a, b) => a - b);
     const minX = Math.min(...room.polygon.map(p => p[0])), maxX = Math.max(...room.polygon.map(p => p[0]));
 
@@ -188,7 +206,7 @@ function buildSlopedCeiling(room, yBase, profile) {
             pos.setZ(j, z);
         }
         geom.computeVertexNormals();
-        group.add(new THREE.Mesh(geom, material));
+        group.add(new THREE.Mesh(geom, _slopedCeilingMat));
     }
     return group;
 }
@@ -226,36 +244,27 @@ export function buildHouse(houseData, state) {
                 // VLOER (floor) - op grondniveau van deze verdieping
                 // Kies het juiste materiaal op basis van floor_type
                 const floorType = room.floor_type || 'default';
-                const floorMaterial = FLOOR_MATERIALS[floorType] || FLOOR_MATERIALS['default'];
 
                 // Create tiled floor for tiles_anthracite
                 if (floorType === 'tiles_anthracite' && room.tile_size) {
-                    const tileSize = room.tile_size || 0.6; // 60cm default
-                    const tileGap = 0.005; // 5mm gap between tiles
+                    const tileSize = room.tile_size || 0.6;
+                    const tileGap = 0.005;
 
-                    // Get bounds of the polygon
                     const minX = Math.min(...room.polygon.map(p => p[0]));
                     const maxX = Math.max(...room.polygon.map(p => p[0]));
                     const minZ = Math.min(...room.polygon.map(p => p[1]));
                     const maxZ = Math.max(...room.polygon.map(p => p[1]));
 
-                    // Create tiles in grid pattern
+                    // Shared geometry + material for all tiles in this room
+                    const tileGeo = new THREE.PlaneGeometry(tileSize - tileGap, tileSize - tileGap);
+                    const tileMat = _getFloorMaterial(floorType);
+
                     for (let x = minX; x < maxX; x += tileSize) {
                         for (let z = minZ; z < maxZ; z += tileSize) {
                             const tileCenterX = x + tileSize / 2;
                             const tileCenterZ = z + tileSize / 2;
 
-                            // Check if tile center is inside polygon
                             if (isPointInPolygon([tileCenterX, tileCenterZ], room.polygon)) {
-                                const tileGeo = new THREE.PlaneGeometry(
-                                    tileSize - tileGap,
-                                    tileSize - tileGap
-                                );
-                                const tileMat = new THREE.MeshPhongMaterial({
-                                    color: floorMaterial.color,
-                                    side: THREE.DoubleSide,
-                                    shininess: floorMaterial.metalness > 0 ? 30 : 5
-                                });
                                 const tileMesh = new THREE.Mesh(tileGeo, tileMat);
                                 tileMesh.rotation.x = Math.PI / 2;
                                 tileMesh.position.set(tileCenterX, yBase + 0.002, tileCenterZ);
@@ -267,14 +276,9 @@ export function buildHouse(houseData, state) {
                         }
                     }
                 } else {
-                    // Regular floor mesh
                     const floorMesh = new THREE.Mesh(
                         new THREE.ShapeGeometry(floorShape),
-                        new THREE.MeshPhongMaterial({
-                            color: floorMaterial.color,
-                            side: THREE.DoubleSide,
-                            shininess: floorMaterial.metalness > 0 ? 30 : 5
-                        })
+                        _getFloorMaterial(floorType)
                     );
                     floorMesh.rotation.x = Math.PI / 2;
                     floorMesh.position.y = yBase + 0.002;  // Iets hoger dan yBase
@@ -315,10 +319,7 @@ export function buildHouse(houseData, state) {
 
                     const ceil = new THREE.Mesh(
                         new THREE.ShapeGeometry(ceilingShape),
-                        new THREE.MeshPhongMaterial({
-                            color: 0xeeeeee,
-                            side: THREE.DoubleSide
-                        })
+                        _ceilingMat
                     );
                     ceil.rotation.x = Math.PI / 2;
                     ceil.position.y = yBase + (floor.height || 2.6) - 0.002;  // Iets lager dan yBase + height

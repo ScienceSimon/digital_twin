@@ -601,8 +601,8 @@
             text-shadow: 0px 0px 4px rgba(0, 0, 0, 0.9);
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+    <script defer src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
 </head>
 <body>
@@ -715,7 +715,8 @@
             "imports": {
                 "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
                 "orbitcontrols": "https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js",
-                "css2drenderer": "https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js"
+                "css2drenderer": "https://unpkg.com/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js",
+                "gsap": "https://cdn.skypack.dev/gsap"
             }
         }
     </script>

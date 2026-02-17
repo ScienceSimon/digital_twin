@@ -44,11 +44,20 @@ export class MqttService {
 
     setSensorData(sensorLijst) {
         this.sensors = sensorLijst;
+        // Build lookup Map for O(1) friendly name resolution
+        this._sensorMap = new Map();
+        if (sensorLijst && Array.isArray(sensorLijst)) {
+            sensorLijst.forEach(s => {
+                if (s.id) this._sensorMap.set(s.id, s);
+                if (s.entity_id) this._sensorMap.set(s.entity_id, s);
+                if (s.binary_id) this._sensorMap.set(s.binary_id, s);
+            });
+        }
     }
 
     _getFriendlyName(entityId) {
-        if (!this.sensors) return entityId;
-        const sensor = this.sensors.find(s => s.id === entityId || s.entity_id === entityId || s.binary_id === entityId);
+        if (!this._sensorMap) return entityId;
+        const sensor = this._sensorMap.get(entityId);
         return sensor ? sensor.friendly_name : entityId;
     }
 

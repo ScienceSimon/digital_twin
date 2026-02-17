@@ -7,8 +7,11 @@ import { buildAssets } from './modules/builders/assetFactory.js';
 import { MqttService } from './modules/core/MqttService.js';
 import { CSS2DObject } from 'css2drenderer';
 import { updateSpotAppearance, createRadarBeacon } from './modules/models/modelFusion.js'; 
-import { gsap } from 'https://cdn.skypack.dev/gsap';
+import { gsap } from 'gsap';
 
+// DOM element cache for O(1) lookups in MQTT hot path
+const _domCache = new Map();
+let _netwerkContainer = null;
 
 const state = {
     scene: null,
@@ -80,29 +83,6 @@ async function init() {
 
             // Callback instellen
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
-                if (entityId === 'Radar_Location/Office') {
-                    try {
-                    // 2. Parse de JSON data {"x": ..., "y": ..., "z": ...}
-                    const coords = JSON.parse(value);
-
-                    // 3. Zoek het baken op ID (Moet matchen met je YAML!)
-                    const beaconEntry = state.iotMeshes.find(item => item.data.id === 'radar_office_position');
-
-                    if (beaconEntry) {
-                        // 4. DE BEWEGING: Verplaats de mesh naar de nieuwe coordinaten
-                        // Let op: controleer of coords.x en coords.z bestaan!
-                        beaconEntry.mesh.position.set(
-                            parseFloat(coords.x), 
-                            parseFloat(coords.y), 
-                            parseFloat(coords.z)
-                        );
-                                              
-                    }
-                } catch (e) {
-                    // Silently ignore radar parse errors
-                }
-            }
-
                 // Check if this is a cover-related message
                 const isCoverMessage = attribute === 'current_position' ||
                                       attribute === 'current_tilt_position' ||
@@ -181,7 +161,7 @@ async function init() {
                 }
 
                 // Check for metric labels (power, electricity, etc.)
-                const metricElement = document.querySelector(`[data-metric-id="${entityId}"]`);
+                const metricElement = _domCache.get(`metric:${entityId}`);
 
                 if (metricElement && attribute === 'state') {
                     const valueEl = metricElement.querySelector('.metric-value');
@@ -219,16 +199,14 @@ async function init() {
                 }
 
                 // --- Netwerk Logica ---
-                const netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
-
-                if (netwerkContainer && attribute === 'state') {
+                if (_netwerkContainer && attribute === 'state') {
                     // Definieer de sensoren
                     const isDownload = entityId === 'dream_machine_special_edition_port_9_rx';
                     const isUpload = entityId === 'dream_machine_special_edition_port_9_tx';
 
                     if (isDownload || isUpload) {
                         const targetClass = isDownload ? '.download-speed' : '.upload-speed';
-                        const el = netwerkContainer.querySelector(targetClass);
+                        const el = _netwerkContainer.querySelector(targetClass);
                         
                         if (el) {
                             const val = parseFloat(value);
@@ -242,8 +220,7 @@ async function init() {
                     }
                 }
 
-                const element = document.getElementById(`temp-pill-${entityId}`) ||
-                                document.querySelector(`[data-binary-ids~="${entityId}"]`);
+                const element = _domCache.get(`sensor:${entityId}`);
                 if (!element) return;
 
                 if (attribute === 'state') {
@@ -296,7 +273,7 @@ async function init() {
             state.mqtt.connect();
         }
 
-        // 7. IoT Labels plaatsen
+        // 7. IoT Labels plaatsen (single pass over sensorLijst)
         if (sensorLijst && Array.isArray(sensorLijst)) {
             sensorLijst.forEach(sensor => {
                 const sId = sensor.id || sensor.entity_id;
@@ -304,97 +281,68 @@ async function init() {
                 const y = parseFloat(sensor.y) || 0;
                 const z = parseFloat(sensor.z) || 0;
 
-                // Skip lamps en blinds - die krijgen geen temperatuur labels
-                if (sensor.type === 'lamp' || sensor.type === 'venetian_blinds') return;
-
-                const div = document.createElement('div');
-                div.id = `temp-pill-${sId}`;
-                div.className = 'temp-pill';
-                div.innerHTML = `
-                    <div class="temp-value" style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">--°C</div>
-                    <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
-                        [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
-                    </div>
-                `;
-
-                const labelObj = new CSS2DObject(div);
-                labelObj.position.set(x, y, z);
-                state.scene.add(labelObj);
-                state.sensorLabels.temperature.push(labelObj);
-            });
-        }
-
-        // 7a. Koppel detectie-dots aan kamerlabels (via state.labelSprites, niet DOM)
-        if (sensorLijst && Array.isArray(sensorLijst)) {
-            sensorLijst.forEach(sensor => {
-                if (!sensor.binary_id || !sensor.friendly_name) return;
-                const match = state.labelSprites.find(sprite => {
-                    const roomName = sprite.element.getAttribute('data-room-name');
-                    return roomName === sensor.friendly_name || sensor.friendly_name.startsWith(roomName);
-                });
-                if (match) {
-                    const existing = match.element.getAttribute('data-binary-ids') || '';
-                    const ids = existing ? existing.split(' ') : [];
-                    ids.push(sensor.binary_id);
-                    match.element.setAttribute('data-binary-ids', ids.join(' '));
+                if (sensor.type === 'lamp') {
+                    // Light label
+                    const labelText = sensor.ha_entity || sensor.id;
+                    const div = document.createElement('div');
+                    div.id = `light-label-${sensor.id}`;
+                    div.className = 'light-label';
+                    div.innerHTML = `
+                        <div>${labelText}</div>
+                        <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                            [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                        </div>
+                    `;
+                    const labelObj = new CSS2DObject(div);
+                    labelObj.position.set(x, y, z);
+                    state.scene.add(labelObj);
+                    state.sensorLabels.lights.push(labelObj);
+                } else if (sensor.type === 'venetian_blinds') {
+                    // Blind label
+                    const labelText = sensor.friendly_name || sensor.ha_entity || sensor.id;
+                    const div = document.createElement('div');
+                    div.id = `blind-label-${sensor.id}`;
+                    div.className = 'blind-label';
+                    div.innerHTML = `
+                        <div>${labelText}</div>
+                        <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                            [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                        </div>
+                    `;
+                    const labelObj = new CSS2DObject(div);
+                    labelObj.position.set(x, y, z);
+                    state.scene.add(labelObj);
+                    state.sensorLabels.blinds.push(labelObj);
+                } else {
+                    // Temperature / motion sensor label
+                    const div = document.createElement('div');
+                    div.id = `temp-pill-${sId}`;
+                    div.className = 'temp-pill';
+                    div.innerHTML = `
+                        <div class="temp-value" style="font-size: 10px; font-weight: bold; margin-bottom: 2px;">--°C</div>
+                        <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                            [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                        </div>
+                    `;
+                    const labelObj = new CSS2DObject(div);
+                    labelObj.position.set(x, y, z);
+                    state.scene.add(labelObj);
+                    state.sensorLabels.temperature.push(labelObj);
                 }
-            });
-        }
 
-        // 7b. Light Labels plaatsen (alleen naam)
-        if (sensorLijst && Array.isArray(sensorLijst)) {
-            sensorLijst.forEach(light => {
-                if (light.type !== 'lamp') return;
-
-                const x = parseFloat(light.x) || 0;
-                const y = parseFloat(light.y) || 0;
-                const z = parseFloat(light.z) || 0;
-
-                // Gebruik ha_entity als naam
-                const labelText = light.ha_entity || light.id;
-
-                const div = document.createElement('div');
-                div.id = `light-label-${light.id}`;
-                div.className = 'light-label';
-                div.innerHTML = `
-                    <div>${labelText}</div>
-                    <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
-                        [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
-                    </div>
-                `;
-
-                const labelObj = new CSS2DObject(div);
-                labelObj.position.set(x, y, z);
-                state.scene.add(labelObj);
-                state.sensorLabels.lights.push(labelObj);
-            });
-        }
-
-        // 7b2. Blind Labels plaatsen (alleen naam)
-        if (sensorLijst && Array.isArray(sensorLijst)) {
-            sensorLijst.forEach(blind => {
-                if (blind.type !== 'venetian_blinds') return;
-
-                const x = parseFloat(blind.x) || 0;
-                const y = parseFloat(blind.y) || 0;
-                const z = parseFloat(blind.z) || 0;
-
-                const labelText = blind.friendly_name || blind.ha_entity || blind.id;
-
-                const div = document.createElement('div');
-                div.id = `blind-label-${blind.id}`;
-                div.className = 'blind-label';
-                div.innerHTML = `
-                    <div>${labelText}</div>
-                    <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
-                        [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
-                    </div>
-                `;
-
-                const labelObj = new CSS2DObject(div);
-                labelObj.position.set(x, y, z);
-                state.scene.add(labelObj);
-                state.sensorLabels.blinds.push(labelObj);
+                // Koppel detectie-dots aan kamerlabels
+                if (sensor.binary_id && sensor.friendly_name) {
+                    const match = state.labelSprites.find(sprite => {
+                        const roomName = sprite.element.getAttribute('data-room-name');
+                        return roomName === sensor.friendly_name || sensor.friendly_name.startsWith(roomName);
+                    });
+                    if (match) {
+                        const existing = match.element.getAttribute('data-binary-ids') || '';
+                        const ids = existing ? existing.split(' ') : [];
+                        ids.push(sensor.binary_id);
+                        match.element.setAttribute('data-binary-ids', ids.join(' '));
+                    }
+                }
             });
         }
 
@@ -414,7 +362,6 @@ async function init() {
                 const div = document.createElement('div');
                 div.id = `metric-${metric.id}`;
                 div.className = 'metric-label';
-                div.setAttribute('data-metric-id', metric.id);
                 div.setAttribute('data-metric-id', metric.id);
 
 div.innerHTML = `
@@ -451,6 +398,24 @@ div.innerHTML = `
                 state.sensorLabels.metrics.push(labelObj);
             });
         }
+
+        // 7d. Build DOM cache for O(1) lookups in MQTT callback
+        document.querySelectorAll('[data-metric-id]').forEach(el => {
+            _domCache.set(`metric:${el.getAttribute('data-metric-id')}`, el);
+        });
+        if (sensorLijst && Array.isArray(sensorLijst)) {
+            sensorLijst.forEach(sensor => {
+                const sId = sensor.id || sensor.entity_id;
+                const el = document.getElementById(`temp-pill-${sId}`) ||
+                           document.querySelector(`[data-binary-ids~="${sId}"]`);
+                if (el) _domCache.set(`sensor:${sId}`, el);
+                if (sensor.binary_id) {
+                    const bEl = document.querySelector(`[data-binary-ids~="${sensor.binary_id}"]`);
+                    if (bEl) _domCache.set(`sensor:${sensor.binary_id}`, bEl);
+                }
+            });
+        }
+        _netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
 
         // 7c. Defaults: light en blind labels uit, coördinaten uit
         state.sensorLabels.lights.forEach(s => s.visible = false);
