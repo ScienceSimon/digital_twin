@@ -31,6 +31,7 @@ export class MqttService {
                 console.log("MQTT: Verbonden met Home Assistant");
                 // Luister naar alle sensoren uit je YAML
                 this.client.subscribe("homeassistant/#");
+                this.client.subscribe("Radar_Location/#");
             },
             onFailure: (err) => {
                 console.error("MQTT: Verbinding mislukt", err);
@@ -53,8 +54,16 @@ export class MqttService {
 
     _handleMessage(message) {
     const topic = message.destinationName;
+    const payload = message.payloadString;
+    if (topic.startsWith('Radar_Location/')) {
+            const entityId = topic;             
+            if (this.onMessageCallback) {
+                this.onMessageCallback(entityId, payload, 'position');
+            }
+            return;
+        }
+    
     const value = message.payloadString.replace('°C', '').trim();
-
     const topicParts = topic.split('/');
     const entityId = topicParts[2];
     const attribute = topicParts[3];

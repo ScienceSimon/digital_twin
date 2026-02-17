@@ -5,7 +5,8 @@ import {
     createCylinderSpot,
     createSphereLamp,
     createLightTube,
-    createTransparentBulb, } from '../models/modelFusion.js';
+    createTransparentBulb,
+    createRadarBeacon } from '../models/modelFusion.js';
     
 export function buildAssets(iotData, state) {
     // Check of er data is en of het een array is
@@ -46,6 +47,15 @@ export function buildAssets(iotData, state) {
             // if (asset.rx || asset.ry || asset.rz) {
             //     console.log(`   🔄 Rotation: rx=${asset.rx || 0}° ry=${asset.ry || 0}° rz=${asset.rz || 0}°`);
             // }
+        }
+
+        if (asset.type === 'radar_beacon') {
+            mesh = createRadarBeacon();
+            
+            const entityId = asset.ha_entity || asset.id;
+            mesh.name = entityId;
+            mesh.userData.entityId = entityId;
+            // console.log(`📡 Beacon aangemaakt voor: ${entityId}`);
         }
 
         if (asset.type === 'lamp') {

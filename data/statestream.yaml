@@ -12,4 +12,8 @@ assets:
  
   - id: dream_machine_special_edition_port_9_tx
     name: 'Current Upload Speed'
-    
+
+  - id: radar_office_position
+    name: "Radar Office"
+    topic: "Radar_Location/Office"
+    type: "radar_beacon"
