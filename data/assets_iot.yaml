@@ -383,7 +383,7 @@ assets:
     type: "lamp"
     model: "cylinder_spot"
     x: 0.50
-    y: 2.40   
+    y: 2.20   
     z: 5.90
     rx: 45
     ry: 0
