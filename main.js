@@ -49,51 +49,67 @@ async function init() {
     state.sunSphere = core.sunSphere;
 
     try {
-        // 2. Laad alle data
-        const allData = await loadAllData();
-        state.houseData  = allData.house;
-        state.iotData    = allData.iot;
-        state.staticData = allData.static;
-        state.metricsData = allData.metrics;
-        
-        if (!state.iotMeshes) {
-            state.iotMeshes = [];
-        }
-        const mijnRadar = createRadarBeacon();
-        state.scene.add(mijnRadar);
-
-        state.iotMeshes.push({
-            mesh: mijnRadar,
-            data: { id: 'radar_office_position' }
-        });
+        // 2. Laad house.yaml eerst — rest laadt parallel op de achtergrond
+        const { house, rest } = await loadAllData();
+        state.houseData = house;
 
         if (!state.houseData) {
             throw new Error("Kritieke fout: house.yaml kon niet worden geladen.");
         }
 
-        // 3. Definieer de sensorLijst één keer centraal
+        if (!state.iotMeshes) {
+            state.iotMeshes = [];
+        }
+
+        // 3. Locatie & Zon
+        const loc = state.houseData.metadata?.location;
+        if (loc) {
+            state.userLoc = loc;
+            const locEl = document.getElementById('locDisplay');
+            if (locEl) locEl.innerText = `Locatie: ${loc.lat}, ${loc.lon}`;
+        }
+
+        // 4. Bouw het huis & start renderen — gebruiker ziet meteen het huis
+        buildHouse(state.houseData, state);
+        updateSun(12);
+        animate(core.renderer, core.labelRenderer, core.scene, core.camera, core.controls);
+
+        // 5. Wacht op de rest van de data (was al aan het laden in parallel)
+        const restData = await rest;
+        state.iotData    = restData.iot;
+        state.staticData = restData.static;
+        state.metricsData = restData.metrics;
+
+        // 6. Radar beacon
+        const mijnRadar = createRadarBeacon();
+        state.scene.add(mijnRadar);
+        state.iotMeshes.push({ mesh: mijnRadar, data: { id: 'radar_office_position' } });
+
+        // 7. Bouw IoT + static assets
+        buildAssets(state.iotData, state);
+        buildAssets(state.staticData, state);
+
+        const lightCount = state.iotMeshes?.filter(item => item.data.type === 'lamp').length || 0;
+        const blindsCount = state.iotMeshes?.filter(item => item.data.type === 'venetian_blinds').length || 0;
+        const solarCount = state.iotMeshes?.filter(item => item.data.type === 'solar_panel').length || 0;
+        console.log(`✅ Assets geladen: ${lightCount} lampen, ${blindsCount} blinds, ${solarCount} zonnepanelen (${state.scene.children.length} objecten)`);
+
+        // 8. Definieer de sensorLijst
         const sensorLijst = state.iotData?.assets || state.iotData?.sensors || state.iotData;
 
-        // 4. MQTT Initialisatie
+        // 9. MQTT Initialisatie + callback
         if (sensorLijst) {
             console.log("MQTT Service opstarten...");
-            
+
             state.mqtt = new MqttService(config.MQTT_HOST, config.MQTT_PORT, config.MQTT_USER, config.MQTT_PASS);
             state.mqtt.setSensorData(sensorLijst);
 
-            // Callback instellen
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
-                // Check if this is a cover-related message
-                const isCoverMessage = attribute === 'current_position' ||
-                                      attribute === 'current_tilt_position' ||
-                                      (attribute === 'state' && (value === 'open' || value === 'opening' || value === 'closed' || value === 'closing'));
-
                 const blindObject = state.scene.getObjectByName('cover.' + entityId) ||
                         state.scene.getObjectByName(entityId);
 
                 if (blindObject && blindObject.animateBlinds) {
                     try {
-                        // Initialize blind state if it doesn't exist
                         if (!state.blindStates[entityId]) {
                             state.blindStates[entityId] = { openAmount: 0, tiltRad: 0 };
                         }
@@ -128,39 +144,33 @@ async function init() {
                 // --- Radar / Locatie Logica ---
                 if (entityId === 'Radar_Location/Office') {
                     try {
-                        // De data is al een object {x, y, z}, maar we checken het voor de zekerheid
                         const coords = typeof value === 'string' ? JSON.parse(value) : value;
-
-                        // 2. Zoek de mesh van het baken in je 3D scene
-                        // We gebruiken nog steeds het ID 'radar_office_position' zoals in je assets_iot.yaml
                         const beaconEntry = state.iotMeshes.find(item => item.data.id === 'radar_office_position');
 
                         if (beaconEntry && coords.x && coords.z) {
-                            // 3. Verplaats het baken soepel naar de nieuwe plek
                             gsap.to(beaconEntry.mesh.position, {
                                 x: parseFloat(coords.x),
-                                y: parseFloat(coords.y), 
+                                y: parseFloat(coords.y),
                                 z: parseFloat(coords.z),
                                 duration: 0.2,
                                 ease: "power1.out"
                             });
-                                                    }
+                        }
                     } catch (e) {
                         // XYZ parse error
                     }
                 }
 
-                // 1. Zoek de lamp op de meest directe manier
+                // Zoek de lamp
                 const nameWithPrefix = 'light.' + entityId;
                 const lightMesh = state.scene.getObjectByName(nameWithPrefix) || state.scene.getObjectByName(entityId);
 
-                // Voor lampen: update bij state, rgb_color of brightness changes
                 if (lightMesh && (attribute === 'state' || attribute === 'rgb_color' || attribute === 'brightness')) {
                     updateSpotAppearance(lightMesh, value);
                     return;
                 }
 
-                // Check for metric labels (power, electricity, etc.)
+                // Metric labels (power, electricity, etc.)
                 let metricElement = _domCache.get(`metric:${entityId}`);
                 if (!metricElement) {
                     metricElement = document.querySelector(`[data-metric-id="${entityId}"]`);
@@ -170,30 +180,21 @@ async function init() {
                 if (metricElement && attribute === 'state') {
                     const valueEl = metricElement.querySelector('.metric-value');
                     const iconEl = metricElement.querySelector('.metric-icon');
-                    
+
                     if (valueEl) {
                         const numValue = parseFloat(value);
-                        
-                        // --- SCHERPTE FIX ---
-                        // We halen alle filters weg en forceren een schone render-layer
+
                         valueEl.style.filter = 'none';
-                        valueEl.style.webkitFilter = 'none'; // Veranderd van blur(0px) naar none
+                        valueEl.style.webkitFilter = 'none';
                         valueEl.style.textShadow = 'none';
-                        valueEl.style.transform = 'translateZ(0)'; // Forceert hardware acceleratie voor scherpte
+                        valueEl.style.transform = 'translateZ(0)';
                         valueEl.style.backfaceVisibility = 'hidden';
 
                         if (!isNaN(numValue)) {
-                            // Formatteer de tekst
                             valueEl.textContent = `${numValue.toFixed(2)} kW`;
-
-                            // --- KLEUR LOGICA ---
-                            // Rood bij verbruik (>0), Groen bij teruglevering/productie (<=0)
                             const statusColor = (numValue > 0) ? '#ec3c3c' : '#1dbe1d';
-
                             valueEl.style.color = statusColor;
-                            if (iconEl) {
-                                iconEl.style.color = statusColor;
-                            }
+                            if (iconEl) iconEl.style.color = statusColor;
                         } else {
                             valueEl.textContent = value;
                             valueEl.style.color = '#ffffff';
@@ -207,18 +208,16 @@ async function init() {
                     _netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
                 }
                 if (_netwerkContainer && attribute === 'state') {
-                    // Definieer de sensoren
                     const isDownload = entityId === 'dream_machine_special_edition_port_9_rx';
                     const isUpload = entityId === 'dream_machine_special_edition_port_9_tx';
 
                     if (isDownload || isUpload) {
                         const targetClass = isDownload ? '.download-speed' : '.upload-speed';
                         const el = _netwerkContainer.querySelector(targetClass);
-                        
+
                         if (el) {
                             const val = parseFloat(value);
                             if (!isNaN(val)) {
-                                // Formatteer naar Mbps, of pas dit aan naar je eigen voorkeur
                                 el.textContent = `${val.toFixed(1)} Mbps`;
                             } else {
                                 el.textContent = '--';
@@ -227,7 +226,13 @@ async function init() {
                     }
                 }
 
-                const element = _domCache.get(`sensor:${entityId}`);
+                // Sensor element lookup (lazy cache)
+                let element = _domCache.get(`sensor:${entityId}`);
+                if (!element) {
+                    element = document.getElementById(`temp-pill-${entityId}`) ||
+                              document.querySelector(`[data-binary-ids~="${entityId}"]`);
+                    if (element) _domCache.set(`sensor:${entityId}`, element);
+                }
                 if (!element) return;
 
                 if (attribute === 'state') {
@@ -248,39 +253,9 @@ async function init() {
                     }
                 }
             };
-            // MQTT connect will be called after assets are built
         }
 
-        // 5. Locatie & Zon
-        const loc = state.houseData.metadata?.location;
-        if (loc) {
-            state.userLoc = loc;
-            const locEl = document.getElementById('locDisplay');
-            if (locEl) locEl.innerText = `Locatie: ${loc.lat}, ${loc.lon}`;
-        }
-
-        // 6. Bouw het huis
-        buildHouse(state.houseData, state);
-
-        // 6b. Bouw IoT assets (lampen, sensoren, etc.)
-        buildAssets(state.iotData, state);
-
-        // 6c. Bouw static assets (zonnepanelen, etc.)
-        buildAssets(state.staticData, state);
-
-        // 6d. Asset loading summary
-        const lightCount = state.iotMeshes?.filter(item => item.data.type === 'lamp').length || 0;
-        const blindsCount = state.iotMeshes?.filter(item => item.data.type === 'venetian_blinds').length || 0;
-        const solarCount = state.iotMeshes?.filter(item => item.data.type === 'solar_panel').length || 0;
-        console.log(`✅ Assets geladen: ${lightCount} lampen, ${blindsCount} blinds, ${solarCount} zonnepanelen (${state.scene.children.length} objecten)`);
-
-        // 6e. Connect MQTT now that all assets exist
-        if (state.mqtt) {
-            console.log("🔌 Connecting to MQTT...");
-            state.mqtt.connect();
-        }
-
-        // 7. IoT Labels plaatsen (single pass over sensorLijst)
+        // 10. IoT Labels plaatsen (single pass over sensorLijst)
         if (sensorLijst && Array.isArray(sensorLijst)) {
             sensorLijst.forEach(sensor => {
                 const sId = sensor.id || sensor.entity_id;
@@ -289,7 +264,6 @@ async function init() {
                 const z = parseFloat(sensor.z) || 0;
 
                 if (sensor.type === 'lamp') {
-                    // Light label
                     const labelText = sensor.ha_entity || sensor.id;
                     const div = document.createElement('div');
                     div.id = `light-label-${sensor.id}`;
@@ -305,7 +279,6 @@ async function init() {
                     state.scene.add(labelObj);
                     state.sensorLabels.lights.push(labelObj);
                 } else if (sensor.type === 'venetian_blinds') {
-                    // Blind label
                     const labelText = sensor.friendly_name || sensor.ha_entity || sensor.id;
                     const div = document.createElement('div');
                     div.id = `blind-label-${sensor.id}`;
@@ -323,7 +296,6 @@ async function init() {
                 } else if (sensor.type === 'radar_beacon') {
                     // No label needed for radar beacons
                 } else {
-                    // Temperature / motion sensor label
                     const div = document.createElement('div');
                     div.id = `temp-pill-${sId}`;
                     div.className = 'temp-pill';
@@ -355,16 +327,15 @@ async function init() {
             });
         }
 
-        // 7b3. Metric labels (electricity, power, etc.)
+        // 11. Metric labels (electricity, power, etc.)
         if (state.metricsData && Array.isArray(state.metricsData)) {
             state.metricsData.forEach(metric => {
+                if (metric && (metric.id === 'dream_machine_special_edition_port_9_rx' ||
+                           metric.id === 'dream_machine_special_edition_port_9_tx' ||
+                           metric.type === 'radar_beacon')) {
+                    return;
+                }
 
-            if (metric && (metric.id === 'dream_machine_special_edition_port_9_rx' ||
-                       metric.id === 'dream_machine_special_edition_port_9_tx' ||
-                       metric.type === 'radar_beacon')) {
-            return;
-        }
-           
                 const x = metric.position?.x || 0;
                 const y = metric.position?.y || 0;
                 const z = metric.position?.z || 0;
@@ -374,31 +345,29 @@ async function init() {
                 div.className = 'metric-label';
                 div.setAttribute('data-metric-id', metric.id);
 
-div.innerHTML = `
-    <div style="display: flex; align-items: flex-start; gap: 6px; padding: 4px;">
-        <div style="display: flex; flex-direction: column;">
-            <div class="metric-name" style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-                ${metric.name || metric.id}
-            </div>
-            
-            <div class="metric-value" style="font-size: 11px; font-weight: 600; line-height: 1; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-                --
-            </div>
-            
-            ${metric.id === 'netto_stroomverbruik' ? `
-            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.2);">
-                <div style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-                    Current Internet speeds
-                </div>
-                <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
-                    <span style="color: #00aaff;">↓ <span class="download-speed">0.0 Mbps</span></span>
-                    <span style="color: #a277ff;">↑ <span class="upload-speed">0.0 Mbps</span></span>
-                </div>
-            </div>
-            ` : ''}
-        </div>
-    </div>
-`;
+                div.innerHTML = `
+                    <div style="display: flex; align-items: flex-start; gap: 6px; padding: 4px;">
+                        <div style="display: flex; flex-direction: column;">
+                            <div class="metric-name" style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                                ${metric.name || metric.id}
+                            </div>
+                            <div class="metric-value" style="font-size: 11px; font-weight: 600; line-height: 1; color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                                --
+                            </div>
+                            ${metric.id === 'netto_stroomverbruik' ? `
+                            <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid rgba(255,255,255,0.2);">
+                                <div style="font-size: 8px; opacity: 0.8; margin-bottom: 1px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                                    Current Internet speeds
+                                </div>
+                                <div style="display: flex; gap: 10px; font-size: 11px; font-weight: 600; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                                    <span style="color: #00aaff;">↓ <span class="download-speed">0.0 Mbps</span></span>
+                                    <span style="color: #a277ff;">↑ <span class="upload-speed">0.0 Mbps</span></span>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
 
                 const labelObj = new CSS2DObject(div);
                 labelObj.position.set(x, y, z);
@@ -409,25 +378,7 @@ div.innerHTML = `
             });
         }
 
-        // 7d. Build DOM cache for O(1) lookups in MQTT callback
-        document.querySelectorAll('[data-metric-id]').forEach(el => {
-            _domCache.set(`metric:${el.getAttribute('data-metric-id')}`, el);
-        });
-        if (sensorLijst && Array.isArray(sensorLijst)) {
-            sensorLijst.forEach(sensor => {
-                const sId = sensor.id || sensor.entity_id;
-                const el = document.getElementById(`temp-pill-${sId}`) ||
-                           document.querySelector(`[data-binary-ids~="${sId}"]`);
-                if (el) _domCache.set(`sensor:${sId}`, el);
-                if (sensor.binary_id) {
-                    const bEl = document.querySelector(`[data-binary-ids~="${sensor.binary_id}"]`);
-                    if (bEl) _domCache.set(`sensor:${sensor.binary_id}`, bEl);
-                }
-            });
-        }
-        _netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
-
-        // 7c. Defaults: light en blind labels uit, coördinaten uit
+        // 12. Defaults: light en blind labels uit, coördinaten uit
         state.sensorLabels.lights.forEach(s => s.visible = false);
         state.sensorLabels.blinds.forEach(s => s.visible = false);
         [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds].forEach(s => {
@@ -435,9 +386,12 @@ div.innerHTML = `
             if (coord) coord.style.display = 'none';
         });
 
-        // 8. Start simulatie & loop
-        updateSun(12);
-        animate(core.renderer, core.labelRenderer, core.scene, core.camera, core.controls);
+        // 13. Connect MQTT nu alle assets en labels bestaan
+        if (state.mqtt) {
+            console.log("🔌 Connecting to MQTT...");
+            state.mqtt.connect();
+        }
+
         console.log("Digital Twin succesvol geïnitialiseerd.");
 
     } catch (err) {

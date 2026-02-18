@@ -5,6 +5,7 @@ import {
     createCylinderSpot,
     createSphereLamp,
     createLightTube,
+    createLightRing,
     createTransparentBulb,
     createRadarBeacon } from '../models/modelFusion.js';
     
@@ -43,6 +44,9 @@ export function buildAssets(iotData, state) {
             } else if (asset.model === 'light_tube') {
                 const length = asset.length || 1;
                 mesh = createLightTube(length);
+            } else if (asset.model === 'light_ring') {
+                const diameter = asset.diameter || 0.5;
+                mesh = createLightRing(diameter);
             } else if (asset.model === 'bulb') {
                 mesh = createTransparentBulb();
             }

@@ -244,6 +244,7 @@ export function buildHouse(houseData, state) {
                 // VLOER (floor) - op grondniveau van deze verdieping
                 // Kies het juiste materiaal op basis van floor_type
                 const floorType = room.floor_type || 'default';
+                const floorOffset = room.floor_offset || 0;
 
                 // Create tiled floor for tiles_anthracite
                 if (floorType === 'tiles_anthracite' && room.tile_size) {
@@ -267,7 +268,7 @@ export function buildHouse(houseData, state) {
                             if (isPointInPolygon([tileCenterX, tileCenterZ], room.polygon)) {
                                 const tileMesh = new THREE.Mesh(tileGeo, tileMat);
                                 tileMesh.rotation.x = Math.PI / 2;
-                                tileMesh.position.set(tileCenterX, yBase + 0.002, tileCenterZ);
+                                tileMesh.position.set(tileCenterX, yBase + 0.002 + floorOffset, tileCenterZ);
                                 tileMesh.userData.floorType = floorType;
                                 tileMesh.userData.roomId = room.id;
                                 layerGroup.add(tileMesh);
@@ -281,7 +282,7 @@ export function buildHouse(houseData, state) {
                         _getFloorMaterial(floorType)
                     );
                     floorMesh.rotation.x = Math.PI / 2;
-                    floorMesh.position.y = yBase + 0.002;  // Iets hoger dan yBase
+                    floorMesh.position.y = yBase + 0.002 + floorOffset;
                     floorMesh.userData.floorType = floorType;
                     floorMesh.userData.roomId = room.id;
                     layerGroup.add(floorMesh);

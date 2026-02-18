@@ -72,6 +72,7 @@ house:
           label: "Deck"
           height: 0
           floor_type: "laminate"
+          floor_offset: 0.01
           no_wall: true
           polygon: [
             [0.00, 20.75],

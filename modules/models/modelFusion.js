@@ -136,6 +136,41 @@ export function createLightTube(length = 1) {
 }
 
 /**
+ * Creates a circular light tube (ring lamp)
+ * @param {number} diameter - Diameter in meters (default 0.5)
+ */
+export function createLightRing(diameter = 0.5) {
+    const group = new THREE.Group();
+    group.name = `light_ring_${diameter}m`;
+
+    const radius = diameter / 2;
+    const tubeRadius = 0.015;
+
+    const ringGeo = new THREE.TorusGeometry(radius, tubeRadius, 16, 64);
+    const ringMat = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0.9, toneMapped: false
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.name = 'tube_body';
+    group.add(ring);
+
+    // Circular glow disc underneath
+    const glowGeo = new THREE.RingGeometry(radius - 0.08, radius + 0.08, 64);
+    const glowMat = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0, side: THREE.DoubleSide
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.position.y = -0.02;
+    glow.rotation.x = -Math.PI / 2;
+    glow.name = 'glow';
+    group.add(glow);
+
+    group.userData.isLightTube = true;
+    group.userData.updateMaterials = { lens: ringMat, glow: glowMat };
+    return group;
+}
+
+/**
  * Creates a floor sphere lamp (bollamp op de grond)
  */
 export function createSphereLamp() {
