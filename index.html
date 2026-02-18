@@ -470,6 +470,39 @@
             }
         }
 
+        /* WEATHER INFO */
+        #weather-info {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        #weather-info:empty {
+            display: none;
+        }
+
+        .weather-main {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 8px;
+        }
+
+        .weather-desc {
+            letter-spacing: 0.5px;
+        }
+
+        .weather-details {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            font-family: 'Consolas', monospace;
+        }
+
         /* SENSOR LABEL STYLES - zoals in je 3D scene */
         .temp-pill {
             padding: 0;
@@ -730,6 +763,7 @@
             <button id="time-live-btn" style="display:none;margin-left:8px;padding:2px 8px;font-size:9px;font-weight:700;letter-spacing:1px;color:#4cd964;background:rgba(76,217,100,0.15);border:1px solid rgba(76,217,100,0.4);border-radius:4px;cursor:pointer;" onclick="window.engine.resetTimeToLive()">LIVE</button>
         </div>
         <input type="range" id="timeSlider" min="0" max="24" step="0.1" value="12">
+        <div id="weather-info"></div>
     </div>
 
     <script type="importmap">

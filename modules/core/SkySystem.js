@@ -104,7 +104,7 @@ export class SkySystem {
         this.scene = scene;
         this.lat = lat;
         this.lon = lon;
-        this.weather = { cloudCover: 0, weatherCode: 0, isDay: true };
+        this.weather = { cloudCover: 0, weatherCode: 0, isDay: true, temperature: null, humidity: null, windSpeed: null, windDir: null };
         this._pollTimer = null;
 
         // Sky dome
@@ -128,6 +128,9 @@ export class SkySystem {
 
         // Stars
         this._createStars();
+
+        // Moon
+        this._createMoon();
 
         // Reusable color objects
         this._zenith = new THREE.Color();
@@ -167,16 +170,138 @@ export class SkySystem {
         starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         starGeo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-        const starMat = new THREE.PointsMaterial({
-            color: 0xffffff,
-            sizeAttenuation: false,
+        const starMat = new THREE.ShaderMaterial({
+            uniforms: {
+                uOpacity: { value: 0 }
+            },
+            vertexShader: `
+                attribute float size;
+                void main() {
+                    vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                    gl_PointSize = size * 3.0;
+                    gl_Position = projectionMatrix * mvPosition;
+                }
+            `,
+            fragmentShader: `
+                uniform float uOpacity;
+                void main() {
+                    float d = length(gl_PointCoord - vec2(0.5));
+                    if (d > 0.5) discard;
+                    // Bright core with thin soft edge
+                    float alpha = smoothstep(0.5, 0.3, d) * uOpacity;
+                    // Boost brightness in center for a glow effect
+                    float core = smoothstep(0.3, 0.0, d);
+                    vec3 col = mix(vec3(1.0, 0.95, 0.7), vec3(1.0, 1.0, 0.95), core);
+                    gl_FragColor = vec4(col, alpha);
+                }
+            `,
             transparent: true,
-            opacity: 0,
             depthWrite: false
         });
 
         this.stars = new THREE.Points(starGeo, starMat);
         this.scene.add(this.stars);
+    }
+
+    _createMoon() {
+        // Moon billboard with phase shader
+        const moonGeo = new THREE.PlaneGeometry(18, 18);
+        this.moonUniforms = {
+            uPhase: { value: 0.0 },  // 0 = new, 0.5 = full, 1.0 = new again
+            uOpacity: { value: 0.0 }
+        };
+        const moonMat = new THREE.ShaderMaterial({
+            uniforms: this.moonUniforms,
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform float uPhase;
+                uniform float uOpacity;
+                varying vec2 vUv;
+                void main() {
+                    vec2 p = vUv * 2.0 - 1.0;
+                    float dist = length(p);
+                    if (dist > 1.0) discard;
+
+                    // Moon disc base color (warm white)
+                    vec3 moonColor = vec3(0.95, 0.92, 0.8);
+
+                    // Phase shadow: shift the terminator based on phase
+                    // phase 0..0.5 = waxing (new to full), 0.5..1.0 = waning (full to new)
+                    float angle = uPhase * 6.2832; // 0 to 2*PI
+                    float terminator = cos(angle);
+                    // Shadow based on x position relative to terminator
+                    float lit = smoothstep(-0.05, 0.05, p.x * terminator + sqrt(1.0 - p.y * p.y) * (1.0 - abs(terminator)));
+
+                    // Near new moon, almost all dark
+                    float illumination = 0.5 + 0.5 * cos(angle - 3.14159);
+                    lit = mix(0.0, lit, smoothstep(0.0, 0.08, illumination));
+
+                    vec3 col = moonColor * (0.08 + 0.92 * lit);
+
+                    // Soft edge
+                    float alpha = smoothstep(1.0, 0.9, dist) * uOpacity;
+                    gl_FragColor = vec4(col, alpha);
+                }
+            `,
+            transparent: true,
+            depthWrite: false,
+            side: THREE.DoubleSide
+        });
+        this.moon = new THREE.Mesh(moonGeo, moonMat);
+        this.moon.visible = false;
+        this.scene.add(this.moon);
+    }
+
+    /**
+     * Calculate approximate moon RA/Dec and phase using simplified algorithm
+     */
+    _getMoonPosition(daysSinceJ2000) {
+        // Simplified lunar position (accuracy ~1-2°, good enough for visual)
+        const d = daysSinceJ2000;
+
+        // Moon's mean elements (degrees)
+        const L = (218.316 + 13.176396 * d) % 360;     // Mean longitude
+        const M = (134.963 + 13.064993 * d) % 360;     // Mean anomaly
+        const F = (93.272 + 13.229350 * d) % 360;      // Argument of latitude
+
+        const Mrad = M * Math.PI / 180;
+        const Frad = F * Math.PI / 180;
+
+        // Ecliptic longitude and latitude
+        const lon = L + 6.289 * Math.sin(Mrad);
+        const lat = 5.128 * Math.sin(Frad);
+
+        // Convert ecliptic to equatorial
+        const obliquity = 23.439 * Math.PI / 180;
+        const lonRad = lon * Math.PI / 180;
+        const latRad = lat * Math.PI / 180;
+
+        const ra = Math.atan2(
+            Math.sin(lonRad) * Math.cos(obliquity) - Math.tan(latRad) * Math.sin(obliquity),
+            Math.cos(lonRad)
+        );
+        const dec = Math.asin(
+            Math.sin(latRad) * Math.cos(obliquity) + Math.cos(latRad) * Math.sin(obliquity) * Math.sin(lonRad)
+        );
+
+        // Moon phase (angle between sun and moon as seen from earth)
+        // Sun mean longitude (simplified)
+        const sunLon = ((280.46 + 0.9856474 * d) % 360) * Math.PI / 180;
+        const elongation = Math.acos(Math.cos(lonRad - sunLon) * Math.cos(latRad));
+        // Phase: 0 = new moon, PI = full moon
+        const phase = elongation / Math.PI; // 0..1, 0.5 = full
+
+        return {
+            ra: ra,           // radians
+            dec: dec,          // radians
+            phase: phase       // 0 = new, 0.5 = full, 1 = new
+        };
     }
 
     /**
@@ -282,7 +407,7 @@ export class SkySystem {
         // Stars visible when sun is below -6° (civil twilight ends)
         if (sunDeg < -6) {
             const starOpacity = Math.min(1, (-sunDeg - 6) / 6) * (1 - cloud * 0.9);
-            this.stars.material.opacity = starOpacity;
+            this.stars.material.uniforms.uOpacity.value = starOpacity;
             this.stars.visible = starOpacity > 0.01;
 
             // Rotate star sphere by local sidereal time
@@ -295,6 +420,48 @@ export class SkySystem {
         } else {
             this.stars.visible = false;
         }
+
+        // === MOON ===
+        const now = new Date();
+        const utcHour = hour - (now.getTimezoneOffset() / -60);
+        const y = now.getFullYear(), mo = now.getMonth() + 1, dy = now.getDate();
+        const jd = 367 * y - Math.floor(7 * (y + Math.floor((mo + 9) / 12)) / 4) + Math.floor(275 * mo / 9) + dy + 1721013.5 + utcHour / 24;
+        const d = jd - 2451545.0;
+
+        const moonData = this._getMoonPosition(d);
+        const lst = this._getLocalSiderealTime(hour);
+        const latRad = this.lat * Math.PI / 180;
+
+        // Hour angle
+        const ha = (lst * Math.PI / 180) - moonData.ra;
+
+        // Convert RA/Dec + HA to altitude/azimuth
+        const sinAlt = Math.sin(latRad) * Math.sin(moonData.dec) + Math.cos(latRad) * Math.cos(moonData.dec) * Math.cos(ha);
+        const moonAlt = Math.asin(sinAlt);
+        const cosAz = (Math.sin(moonData.dec) - Math.sin(latRad) * sinAlt) / (Math.cos(latRad) * Math.cos(moonAlt));
+        let moonAz = Math.acos(Math.max(-1, Math.min(1, cosAz)));
+        if (Math.sin(ha) > 0) moonAz = 2 * Math.PI - moonAz;
+
+        const moonVisible = moonAlt > 0 && cloud < 0.95;
+        this.moon.visible = moonVisible;
+
+        if (moonVisible) {
+            // Position moon on sky dome
+            const r = 370;
+            const mx = -r * Math.cos(moonAlt) * Math.sin(moonAz);
+            const my = r * Math.sin(moonAlt);
+            const mz = -r * Math.cos(moonAlt) * Math.cos(moonAz);
+            this.moon.position.set(mx, my, mz);
+
+            // Billboard: always face camera
+            this.moon.lookAt(0, 0, 0);
+
+            // Phase and opacity
+            this.moonUniforms.uPhase.value = moonData.phase;
+            // Brighter at night, dimmer during day
+            const moonBrightness = sunDeg < -6 ? 1.0 : sunDeg < 0 ? (1.0 - (sunDeg + 6) / 6 * 0.5) : 0.5;
+            this.moonUniforms.uOpacity.value = moonBrightness * (1 - cloud * 0.8);
+        }
     }
 
     /**
@@ -302,17 +469,65 @@ export class SkySystem {
      */
     async fetchWeather() {
         try {
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${this.lat}&longitude=${this.lon}&current=cloud_cover,weather_code,is_day`;
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${this.lat}&longitude=${this.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,cloud_cover,weather_code,wind_speed_10m,wind_direction_10m,is_day`;
             const resp = await fetch(url);
             const data = await resp.json();
             if (data.current) {
                 this.weather.cloudCover = data.current.cloud_cover || 0;
                 this.weather.weatherCode = data.current.weather_code || 0;
                 this.weather.isDay = data.current.is_day === 1;
+                this.weather.temperature = data.current.temperature_2m;
+                this.weather.feelsLike = data.current.apparent_temperature;
+                this.weather.humidity = data.current.relative_humidity_2m;
+                this.weather.windSpeed = data.current.wind_speed_10m;
+                this.weather.windDir = data.current.wind_direction_10m;
+                this._updateWeatherUI();
             }
         } catch (e) {
             // Weather fetch failed, keep defaults
         }
+    }
+
+    /**
+     * Map WMO weather code to description and icon
+     */
+    _weatherLabel(code) {
+        if (code <= 0) return ['Clear', '☀️'];
+        if (code <= 1) return ['Mostly Clear', '🌤️'];
+        if (code <= 2) return ['Partly Cloudy', '⛅'];
+        if (code <= 3) return ['Overcast', '☁️'];
+        if (code <= 48) return ['Fog', '🌫️'];
+        if (code <= 55) return ['Drizzle', '🌦️'];
+        if (code <= 57) return ['Freezing Drizzle', '🌧️'];
+        if (code <= 65) return ['Rain', '🌧️'];
+        if (code <= 67) return ['Freezing Rain', '🌧️'];
+        if (code <= 75) return ['Snow', '❄️'];
+        if (code <= 77) return ['Snow Grains', '❄️'];
+        if (code <= 82) return ['Showers', '🌦️'];
+        if (code <= 86) return ['Snow Showers', '🌨️'];
+        if (code <= 95) return ['Thunderstorm', '⛈️'];
+        return ['Severe Storm', '⛈️'];
+    }
+
+    _windDirection(deg) {
+        const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        return dirs[Math.round(deg / 45) % 8];
+    }
+
+    _updateWeatherUI() {
+        const el = document.getElementById('weather-info');
+        if (!el) return;
+        const w = this.weather;
+        const [desc, icon] = this._weatherLabel(w.weatherCode);
+        const wind = w.windSpeed != null ? `${Math.round(w.windSpeed)} km/h ${this._windDirection(w.windDir)}` : '—';
+
+        el.innerHTML =
+            `<div class="weather-main">${icon} <span class="weather-desc">${desc}</span></div>` +
+            `<div class="weather-details">` +
+            `<span>🌡️ ${w.temperature != null ? w.temperature.toFixed(1) + '°' : '—'}</span>` +
+            `<span>💧 ${w.humidity != null ? w.humidity + '%' : '—'}</span>` +
+            `<span>💨 ${wind}</span>` +
+            `</div>`;
     }
 
     /**
