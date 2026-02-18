@@ -112,16 +112,15 @@ export function createLightTube(length = 1) {
 
     // Tube geometry depends on length, so per-instance
     const tubeGeo = new THREE.CylinderGeometry(0.015, 0.015, length, 16);
-    const tubeMat = new THREE.MeshStandardMaterial({
-        color: 0x000000, transparent: true, opacity: 0.9,
-        emissive: 0x000000, metalness: 0.2, roughness: 0.5
+    const tubeMat = new THREE.MeshBasicMaterial({
+        color: 0x000000, transparent: true, opacity: 0.9, toneMapped: false
     });
     const tube = new THREE.Mesh(tubeGeo, tubeMat);
     tube.rotation.z = Math.PI / 2;
     tube.name = 'tube_body';
     group.add(tube);
 
-    const glowGeo = new THREE.PlaneGeometry(length + 0.2, 0.1);
+    const glowGeo = new THREE.PlaneGeometry(length, 0.15);
     const glowMat = new THREE.MeshBasicMaterial({
         color: 0x000000, transparent: true, opacity: 0, side: THREE.DoubleSide
     });
@@ -131,6 +130,7 @@ export function createLightTube(length = 1) {
     glow.name = 'glow';
     group.add(glow);
 
+    group.userData.isLightTube = true;
     group.userData.updateMaterials = { lens: tubeMat, glow: glowMat };
     return group;
 }
@@ -272,6 +272,23 @@ export function updateSpotAppearance(lightGroup, state) {
         _tmpBaseColor.setRGB(rgb[0] / 255, rgb[1] / 255, rgb[2] / 255);
     } else {
         _tmpBaseColor.setRGB(1, 1, 1);
+    }
+
+    // Light tubes: bright uniform glow along the full length
+    if (lightGroup.userData.isLightTube) {
+        _tmpBrightColor.copy(_tmpBaseColor).multiplyScalar(intensity * 12);
+        lens.color.copy(_tmpBrightColor);
+        lens.opacity = isOn ? 1.0 : 0.9;
+        if (glow) {
+            glow.color.copy(_tmpBaseColor);
+            glow.opacity = intensity * 0.7;
+        }
+        // Update lights
+        const spotlight = lightGroup.getObjectByName('main_light');
+        if (spotlight) { spotlight.intensity = intensity * 20; spotlight.color.copy(_tmpBaseColor); }
+        const pointLight = lightGroup.getObjectByName('spot_glow');
+        if (pointLight) { pointLight.intensity = intensity * 3; pointLight.color.copy(_tmpBaseColor); }
+        return;
     }
 
     _tmpBrightColor.copy(_tmpBaseColor).multiplyScalar(intensity * 10);
