@@ -8,6 +8,7 @@ import { MqttService } from './modules/core/MqttService.js';
 import { CSS2DObject } from 'css2drenderer';
 import { updateSpotAppearance, createRadarBeacon } from './modules/models/modelFusion.js'; 
 import { gsap } from 'gsap';
+import { SkySystem } from './modules/core/SkySystem.js';
 
 // DOM element cache for O(1) lookups in MQTT hot path
 const _domCache = new Map();
@@ -68,6 +69,10 @@ async function init() {
             const locEl = document.getElementById('locDisplay');
             if (locEl) locEl.innerText = `Locatie: ${loc.lat}, ${loc.lon}`;
         }
+
+        // 3b. Sky system
+        state.skySystem = new SkySystem(state.scene, state.userLoc.lat, state.userLoc.lon);
+        state.skySystem.startWeatherPolling();
 
         // 4. Bouw het huis & start renderen — gebruiker ziet meteen het huis
         buildHouse(state.houseData, state);
@@ -519,9 +524,24 @@ function updateSun(hour) {
     // Verminder zonlicht intensiteit voor meer contrast met lampen
     state.sunLight.intensity = y > 0 ? 0.3 : 0;
 
-    // Maak de lucht veel donkerder zodat lampen beter uitkomen
-    // Max lightness = 0.15 (was 1.0), min = 0.02 (was 0.05)
-    state.scene.background.setHSL(0.6, 0.3, Math.max(y / 50 * 0.15, 0.02));
+    // Hide sun sphere when well below horizon (fade over ~15° range)
+    const altDeg = altitude * 180 / Math.PI;
+    if (altDeg < -15) {
+        state.sunSphere.visible = false;
+    } else if (altDeg < 0) {
+        state.sunSphere.visible = true;
+        state.sunSphere.material.opacity = 1 - Math.abs(altDeg) / 15;
+        state.sunSphere.material.transparent = true;
+    } else {
+        state.sunSphere.visible = true;
+        state.sunSphere.material.opacity = 1;
+        state.sunSphere.material.transparent = false;
+    }
+
+    // Update sky dome and stars
+    if (state.skySystem) {
+        state.skySystem.update(hour, altitude);
+    }
 }
 
 // --- UI EVENT HANDLERS (Gekoppeld aan window.engine voor index.html) ---
@@ -695,30 +715,45 @@ function animate(renderer, labelRenderer, scene, camera, controls) {
 const timeSlider = document.getElementById('timeSlider');
 const timeDisplayEl = document.getElementById('time-display');
 const timeLiveBtn = document.getElementById('time-live-btn');
+let _liveMode = true;
+let _liveInterval = null;
 
-function _setTimeToLive() {
+function _tickLive() {
     const now = new Date();
     const localHour = now.getHours() + now.getMinutes() / 60;
     if (timeSlider) timeSlider.value = localHour;
     if (timeDisplayEl) timeDisplayEl.innerText = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
-    if (timeLiveBtn) timeLiveBtn.style.display = 'none';
     updateSun(localHour);
 }
 
+function _startLiveMode() {
+    _liveMode = true;
+    if (timeLiveBtn) timeLiveBtn.style.display = 'none';
+    _tickLive();
+    if (_liveInterval) clearInterval(_liveInterval);
+    _liveInterval = setInterval(_tickLive, 30000); // update every 30s
+}
+
+function _stopLiveMode() {
+    _liveMode = false;
+    if (_liveInterval) { clearInterval(_liveInterval); _liveInterval = null; }
+    if (timeLiveBtn) timeLiveBtn.style.display = 'inline-block';
+}
+
 if (timeSlider) {
-    _setTimeToLive();
+    _startLiveMode();
 
     timeSlider.addEventListener('input', (e) => {
+        if (_liveMode) _stopLiveMode();
         const val = parseFloat(e.target.value);
         if (timeDisplayEl) {
             timeDisplayEl.innerText = Math.floor(val) + ":" + Math.floor((val % 1) * 60).toString().padStart(2, '0');
         }
-        if (timeLiveBtn) timeLiveBtn.style.display = 'inline-block';
         updateSun(val);
     });
 }
 
-window.engine.resetTimeToLive = _setTimeToLive;
+window.engine.resetTimeToLive = _startLiveMode;
 
 
 

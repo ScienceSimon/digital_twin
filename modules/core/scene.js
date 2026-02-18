@@ -4,7 +4,7 @@ import { CSS2DRenderer, CSS2DObject } from 'css2drenderer';
 
 export function initScene() {
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1a20);
+    // Background handled by SkySystem dome — no static color needed
     
     const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(15, 15, 15);
@@ -42,18 +42,7 @@ export function initScene() {
     );
     scene.add(sunSphere);
     
-    // --- ONDERGROND TOEVOEGEN ---
-    // We maken een groot vlak (Plane) dat de blauwe lucht aan de onderkant afdekt
-    const floorGeo = new THREE.PlaneGeometry(100, 100);
-    const floorMat = new THREE.MeshBasicMaterial({ color: 0x050505, side: THREE.DoubleSide });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2; // Plat leggen
-    floor.position.y = -0.02; // Iets onder het nulpunt om 'flikkeren' met muren te voorkomen
-    scene.add(floor);
-
-    // Het raster (Grid) bovenop de donkere vloer - uitgeschakeld
-    // scene.add(new THREE.GridHelper(40, 40, 0x111111, 0x111111));
-    // ----------------------------
+    // Ground plane removed — SkySystem shader handles below-horizon color
 
     window.addEventListener('resize', () => {
         const width = window.innerWidth;
