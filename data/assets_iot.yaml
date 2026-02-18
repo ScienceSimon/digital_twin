@@ -70,9 +70,9 @@ assets:
     binary_id: "hue_motion_sensor_kantoor_beweging"
     friendly_name: "Office"
     type: "temp_motion"
-    x: 0.77
-    y: 4.23
-    z: 6.17
+    x: 1.12
+    y: 3.50
+    z: 9.25
 
   - id: "hue_motion_sensor_trap_1_temperatuur"
     binary_id: "hue_motion_sensor_trap_1_beweging"

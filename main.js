@@ -161,7 +161,11 @@ async function init() {
                 }
 
                 // Check for metric labels (power, electricity, etc.)
-                const metricElement = _domCache.get(`metric:${entityId}`);
+                let metricElement = _domCache.get(`metric:${entityId}`);
+                if (!metricElement) {
+                    metricElement = document.querySelector(`[data-metric-id="${entityId}"]`);
+                    if (metricElement) _domCache.set(`metric:${entityId}`, metricElement);
+                }
 
                 if (metricElement && attribute === 'state') {
                     const valueEl = metricElement.querySelector('.metric-value');
@@ -199,6 +203,9 @@ async function init() {
                 }
 
                 // --- Netwerk Logica ---
+                if (!_netwerkContainer) {
+                    _netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
+                }
                 if (_netwerkContainer && attribute === 'state') {
                     // Definieer de sensoren
                     const isDownload = entityId === 'dream_machine_special_edition_port_9_rx';
@@ -313,6 +320,8 @@ async function init() {
                     labelObj.position.set(x, y, z);
                     state.scene.add(labelObj);
                     state.sensorLabels.blinds.push(labelObj);
+                } else if (sensor.type === 'radar_beacon') {
+                    // No label needed for radar beacons
                 } else {
                     // Temperature / motion sensor label
                     const div = document.createElement('div');
@@ -350,9 +359,10 @@ async function init() {
         if (state.metricsData && Array.isArray(state.metricsData)) {
             state.metricsData.forEach(metric => {
 
-            if (metric && (metric.id === 'dream_machine_special_edition_port_9_rx' || 
-                       metric.id === 'dream_machine_special_edition_port_9_tx')) {
-            return; 
+            if (metric && (metric.id === 'dream_machine_special_edition_port_9_rx' ||
+                       metric.id === 'dream_machine_special_edition_port_9_tx' ||
+                       metric.type === 'radar_beacon')) {
+            return;
         }
            
                 const x = metric.position?.x || 0;
