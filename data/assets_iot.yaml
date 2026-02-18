@@ -1,4 +1,14 @@
 assets:
+  # ESP32 Modules
+  - id: "esp32_module_1"
+    friendly_name: "ESP32 Module 1"
+    type: "presence"
+    x: 0.50
+    y: 2.20
+    z: 5.90
+
+
+
   # Temperatuursensoren (Philips Hue Motion Sensors en Nest Thermostaat)
 
   # Begane grond
@@ -72,7 +82,7 @@ assets:
     type: "temp_motion"
     x: 1.12
     y: 3.50
-    z: 9.25
+    z: 9.15
 
   - id: "hue_motion_sensor_trap_1_temperatuur"
     binary_id: "hue_motion_sensor_trap_1_beweging"

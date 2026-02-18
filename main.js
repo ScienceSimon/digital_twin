@@ -71,7 +71,8 @@ async function init() {
 
         // 4. Bouw het huis & start renderen — gebruiker ziet meteen het huis
         buildHouse(state.houseData, state);
-        updateSun(12);
+        const _now = new Date();
+        updateSun(_now.getHours() + _now.getMinutes() / 60);
         animate(core.renderer, core.labelRenderer, core.scene, core.camera, core.controls);
 
         // Show "Loading..." overlay while assets load (house already visible)
@@ -307,6 +308,22 @@ async function init() {
                     labelObj.position.set(x, y, z);
                     state.scene.add(labelObj);
                     state.sensorLabels.blinds.push(labelObj);
+                } else if (sensor.type === 'presence') {
+                    const labelText = sensor.friendly_name || sensor.id;
+                    const div = document.createElement('div');
+                    div.id = `module-label-${sensor.id}`;
+                    div.className = 'module-label';
+                    div.innerHTML = `
+                        <div>${labelText}</div>
+                        <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                            [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                        </div>
+                    `;
+                    const labelObj = new CSS2DObject(div);
+                    labelObj.position.set(x, y, z);
+                    state.scene.add(labelObj);
+                    if (!state.sensorLabels.modules) state.sensorLabels.modules = [];
+                    state.sensorLabels.modules.push(labelObj);
                 } else if (sensor.type === 'radar_beacon') {
                     // No label needed for radar beacons
                 } else {
@@ -392,10 +409,11 @@ async function init() {
             });
         }
 
-        // 12. Defaults: light en blind labels uit, coördinaten uit
+        // 12. Defaults: light, blind en module labels uit, coördinaten uit
         state.sensorLabels.lights.forEach(s => s.visible = false);
         state.sensorLabels.blinds.forEach(s => s.visible = false);
-        [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds].forEach(s => {
+        if (state.sensorLabels.modules) state.sensorLabels.modules.forEach(s => s.visible = false);
+        [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds, ...(state.sensorLabels.modules || [])].forEach(s => {
             const coord = s.element.querySelector('.coord-display');
             if (coord) coord.style.display = 'none';
         });
@@ -483,6 +501,7 @@ function getCeilingHeight(z, profile) {
 
 // --- ZON LOGICA ---
 function updateSun(hour) {
+    if (!state.sunLight || !state.sunSphere) return;
     const hourAngle = (hour - 12) * 15 * Math.PI / 180;
     const latRad = state.userLoc.lat * Math.PI / 180;
     const altitude = Math.asin(Math.sin(latRad) * Math.sin(-0.2) + Math.cos(latRad) * Math.cos(-0.2) * Math.cos(hourAngle));
@@ -561,6 +580,12 @@ window.engine = {
     toggleBlinds: (visible) => {
         if (state.sensorLabels.blinds) {
             state.sensorLabels.blinds.forEach(s => s.visible = visible);
+        }
+    },
+
+    toggleModules: (visible) => {
+        if (state.sensorLabels.modules) {
+            state.sensorLabels.modules.forEach(s => s.visible = visible);
         }
     },
 
@@ -668,16 +693,32 @@ function animate(renderer, labelRenderer, scene, camera, controls) {
 }
 // Slider koppelen voor zon-tijd
 const timeSlider = document.getElementById('timeSlider');
+const timeDisplayEl = document.getElementById('time-display');
+const timeLiveBtn = document.getElementById('time-live-btn');
+
+function _setTimeToLive() {
+    const now = new Date();
+    const localHour = now.getHours() + now.getMinutes() / 60;
+    if (timeSlider) timeSlider.value = localHour;
+    if (timeDisplayEl) timeDisplayEl.innerText = now.getHours() + ":" + now.getMinutes().toString().padStart(2, '0');
+    if (timeLiveBtn) timeLiveBtn.style.display = 'none';
+    updateSun(localHour);
+}
+
 if (timeSlider) {
+    _setTimeToLive();
+
     timeSlider.addEventListener('input', (e) => {
         const val = parseFloat(e.target.value);
-        const display = document.getElementById('timeDisplay');
-        if (display) {
-            display.innerText = Math.floor(val) + ":" + Math.floor((val % 1) * 60).toString().padStart(2, '0');
+        if (timeDisplayEl) {
+            timeDisplayEl.innerText = Math.floor(val) + ":" + Math.floor((val % 1) * 60).toString().padStart(2, '0');
         }
+        if (timeLiveBtn) timeLiveBtn.style.display = 'inline-block';
         updateSun(val);
     });
 }
+
+window.engine.resetTimeToLive = _setTimeToLive;
 
 
 

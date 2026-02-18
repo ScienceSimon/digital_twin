@@ -521,6 +521,18 @@
             pointer-events: none;
         }
 
+        .module-label {
+            padding: 3px 6px;
+            background: rgba(20, 40, 30, 0.9);
+            border-radius: 4px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 8px;
+            font-weight: 500;
+            color: #4cd964;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
         .metric-label {
             padding: 5px 8px;
             background: rgba(30, 30, 35, 0.95);
@@ -692,6 +704,10 @@
             <input type="checkbox" onchange="window.engine.toggleBlinds(this.checked)">
             <span>Blind Labels</span>
         </label>
+        <label class="toggle-box">
+            <input type="checkbox" onchange="window.engine.toggleModules(this.checked)">
+            <span>Module Labels</span>
+        </label>
         <label class="toggle-box error-toggle">
             <input type="checkbox" checked onchange="window.engine.toggleFailedSensors(this.checked)">
             <span>Errors</span>
@@ -711,6 +727,7 @@
         <div id="time-label">Time of the Day</div>
         <div id="time-display-box">
             <span id="time-display">12:00</span>
+            <button id="time-live-btn" style="display:none;margin-left:8px;padding:2px 8px;font-size:9px;font-weight:700;letter-spacing:1px;color:#4cd964;background:rgba(76,217,100,0.15);border:1px solid rgba(76,217,100,0.4);border-radius:4px;cursor:pointer;" onclick="window.engine.resetTimeToLive()">LIVE</button>
         </div>
         <input type="range" id="timeSlider" min="0" max="24" step="0.1" value="12">
     </div>
