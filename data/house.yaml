@@ -71,7 +71,7 @@ house:
         - id: "Vlonder"
           label: "Deck"
           height: 0
-          floor_type: "laminate"
+          floor_type: "deck_wood"
           floor_offset: 0.01
           no_wall: true
           polygon: [

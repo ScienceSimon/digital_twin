@@ -74,6 +74,16 @@ async function init() {
         updateSun(12);
         animate(core.renderer, core.labelRenderer, core.scene, core.camera, core.controls);
 
+        // Show "Loading..." overlay while assets load (house already visible)
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingText = document.getElementById('loading-text');
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+        let _dots = 0;
+        const _loadingInterval = setInterval(() => {
+            _dots = (_dots % 3) + 1;
+            if (loadingText) loadingText.textContent = 'Loading' + '.'.repeat(_dots);
+        }, 500);
+
         // 5. Wacht op de rest van de data (was al aan het laden in parallel)
         const restData = await rest;
         state.iotData    = restData.iot;
@@ -93,6 +103,10 @@ async function init() {
         const blindsCount = state.iotMeshes?.filter(item => item.data.type === 'venetian_blinds').length || 0;
         const solarCount = state.iotMeshes?.filter(item => item.data.type === 'solar_panel').length || 0;
         console.log(`✅ Assets geladen: ${lightCount} lampen, ${blindsCount} blinds, ${solarCount} zonnepanelen (${state.scene.children.length} objecten)`);
+
+        // Hide loading overlay
+        clearInterval(_loadingInterval);
+        if (loadingScreen) loadingScreen.style.display = 'none';
 
         // 8. Definieer de sensorLijst
         const sensorLijst = state.iotData?.assets || state.iotData?.sensors || state.iotData;

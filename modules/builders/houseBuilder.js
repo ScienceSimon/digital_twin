@@ -5,7 +5,7 @@ const WALL_THICKNESS = 0.08;
 
 // Shared materials (created once, reused across all rooms)
 const _ceilingMat = new THREE.MeshPhongMaterial({ color: 0xeeeeee, side: THREE.DoubleSide });
-const _slopedCeilingMat = new THREE.MeshPhongMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+const _slopedCeilingMat = new THREE.MeshPhongMaterial({ color: 0x111111, side: THREE.DoubleSide });
 const _windowFrameMat = new THREE.MeshPhongMaterial({ color: 0xffffff });
 
 // Glass materials cached by glass_type
@@ -18,14 +18,75 @@ const _glassMaterials = {
 // Floor material cache (keyed by floor_type, built lazily)
 const _floorMatCache = {};
 
+function _createWoodTexture(baseR, baseG, baseB, plankWidth = 64) {
+    const w = 512, h = 512;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+
+    ctx.fillStyle = `rgb(${baseR},${baseG},${baseB})`;
+    ctx.fillRect(0, 0, w, h);
+
+    for (let y = 0; y < h; y += 2) {
+        const vary = Math.sin(y * 0.08) * 8 + Math.sin(y * 0.3) * 3;
+        const brightness = (Math.random() * 12 - 6) + vary;
+        const r = Math.max(0, Math.min(255, baseR + brightness));
+        const g = Math.max(0, Math.min(255, baseG + brightness * 0.8));
+        const b = Math.max(0, Math.min(255, baseB + brightness * 0.6));
+        ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+        ctx.fillRect(0, y, w, 2);
+    }
+
+    for (let x = plankWidth; x < w; x += plankWidth) {
+        ctx.fillStyle = 'rgba(0,0,0,0.3)';
+        ctx.fillRect(x - 1, 0, 2, h);
+    }
+
+    for (let i = 0; i < 3; i++) {
+        const kx = Math.random() * w;
+        const ky = Math.random() * h;
+        const kr = 4 + Math.random() * 8;
+        const grad = ctx.createRadialGradient(kx, ky, 0, kx, ky, kr);
+        grad.addColorStop(0, `rgba(${(baseR * 0.5)|0},${(baseG * 0.4)|0},${(baseB * 0.3)|0},0.6)`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(kx - kr, ky - kr, kr * 2, kr * 2);
+    }
+
+    const tex = new THREE.CanvasTexture(canvas);
+    tex.wrapS = THREE.RepeatWrapping;
+    tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(4, 4);
+    return tex;
+}
+
 function _getFloorMaterial(floorType) {
     if (_floorMatCache[floorType]) return _floorMatCache[floorType];
     const floorDef = FLOOR_MATERIALS[floorType] || FLOOR_MATERIALS['default'];
-    _floorMatCache[floorType] = new THREE.MeshPhongMaterial({
-        color: floorDef.color,
-        side: THREE.DoubleSide,
-        shininess: floorDef.metalness > 0 ? 30 : 5
-    });
+
+    // Wood-type floors get a procedural texture
+    if (floorDef.wood) {
+        const c = new THREE.Color(floorDef.color);
+        const rotated = floorDef.rotated || false;
+        const tex = _createWoodTexture((c.r * 255)|0, (c.g * 255)|0, (c.b * 255)|0, floorDef.plankWidth);
+        if (rotated) {
+            tex.rotation = Math.PI / 2;
+            tex.center.set(0.5, 0.5);
+        }
+        _floorMatCache[floorType] = new THREE.MeshStandardMaterial({
+            map: tex,
+            roughness: floorDef.roughness || 0.5,
+            metalness: floorDef.metalness || 0.0,
+            side: THREE.DoubleSide
+        });
+    } else {
+        _floorMatCache[floorType] = new THREE.MeshPhongMaterial({
+            color: floorDef.color,
+            side: THREE.DoubleSide,
+            shininess: floorDef.metalness > 0 ? 30 : 5
+        });
+    }
     return _floorMatCache[floorType];
 }
 
@@ -35,6 +96,7 @@ const FLOOR_MATERIALS = {
         color: 0xc19a6b,
         roughness: 0.7,
         metalness: 0.0,
+        wood: true,
         name: 'Houten vloer'
     },
     'dark_wood': {
@@ -42,6 +104,14 @@ const FLOOR_MATERIALS = {
         roughness: 0.6,
         metalness: 0.0,
         name: 'Donker hout'
+    },
+    'deck_wood': {
+        color: 0x3d2b1f,
+        roughness: 0.4,
+        metalness: 0.05,
+        wood: true,
+        plankWidth: 64,
+        name: 'Vlonderhout'
     },
     'tile': {
         color: 0x111111,

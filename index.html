@@ -607,6 +607,11 @@
 </head>
 <body>
 
+    <!-- LOADING SCREEN (hidden until assets phase) -->
+    <div id="loading-screen" style="position:fixed;inset:0;display:none;align-items:flex-end;justify-content:center;padding-bottom:40px;z-index:9999;pointer-events:none;">
+        <span id="loading-text" style="font-family:'Segoe UI',sans-serif;font-size:16px;color:rgba(255,255,255,0.5);letter-spacing:2px;">Loading.</span>
+    </div>
+
     <!-- TOGGLE UI BUTTON - LINKS BOVEN -->
     <button id="toggle-ui-btn" onclick="
         const log = document.getElementById('event-log-container');
