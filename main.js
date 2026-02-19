@@ -238,7 +238,9 @@ async function init() {
                         if (el) {
                             const val = parseFloat(value);
                             if (!isNaN(val)) {
-                                el.textContent = `${val.toFixed(1)} Mbps`;
+                                el.textContent = val < 1
+                                    ? `${(val * 1000).toFixed(0)} Kbps`
+                                    : `${val.toFixed(1)} Mbps`;
                             } else {
                                 el.textContent = '--';
                             }
