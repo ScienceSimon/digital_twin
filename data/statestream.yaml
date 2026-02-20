@@ -7,11 +7,31 @@ assets:
   #   ha_entity: "climate.living_room"
   #   position: { x: 2.475, y: 11, z: 5.61 }
 
+  # Dream Machine SE ports
+  - id: dream_machine_special_edition_port_2_rx
+  - id: dream_machine_special_edition_port_2_tx
+  - id: dream_machine_special_edition_port_3_rx
+  - id: dream_machine_special_edition_port_3_tx
+  - id: dream_machine_special_edition_port_4_rx
+  - id: dream_machine_special_edition_port_4_tx
+  - id: dream_machine_special_edition_port_5_rx
+  - id: dream_machine_special_edition_port_5_tx
+  - id: dream_machine_special_edition_port_6_rx
+  - id: dream_machine_special_edition_port_6_tx
+  - id: dream_machine_special_edition_port_7_rx
+  - id: dream_machine_special_edition_port_7_tx
   - id: dream_machine_special_edition_port_9_rx
     name: 'Current Download Speed'
- 
   - id: dream_machine_special_edition_port_9_tx
     name: 'Current Upload Speed'
+
+  # Flex Mini switches
+  - id: usw_flex_mini_kantoor_port_4_rx
+  - id: usw_flex_mini_kantoor_port_4_tx
+  - id: usw_flex_mini_kantoor_port_5_rx
+  - id: usw_flex_mini_kantoor_port_5_tx
+  - id: usw_flex_mini_zolder_port_3_rx
+  - id: usw_flex_mini_zolder_port_3_tx
 
   - id: radar_office_position
     name: "Radar Office"

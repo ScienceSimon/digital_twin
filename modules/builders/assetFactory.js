@@ -7,7 +7,13 @@ import {
     createLightTube,
     createLightRing,
     createTransparentBulb,
-    createRadarBeacon } from '../models/modelFusion.js';
+    createRadarBeacon,
+    createServerRack,
+    createFlexMini,
+    createU6Mesh,
+    createLianLiVision,
+    createRoombaVacuum,
+    createRoombaDock } from '../models/modelFusion.js';
     
 export function buildAssets(iotData, state) {
     if (!iotData) return;
@@ -24,6 +30,38 @@ export function buildAssets(iotData, state) {
 
         if (asset.type === 'venetian_blinds') {
             mesh = createVenetianBlinds(asset);
+        }
+
+        if (asset.type === 'server_rack' || asset.model === 'server_rack') {
+            mesh = createServerRack();
+        }
+
+        if (asset.model === 'flex_mini') {
+            mesh = createFlexMini();
+        }
+
+        if (asset.model === 'u6_mesh') {
+            mesh = createU6Mesh();
+        }
+
+        if (asset.model === 'lianli_vision') {
+            mesh = createLianLiVision(asset.variant || 'black');
+        }
+
+        if (asset.model === 'irobot_vacuum') {
+            mesh = createRoombaVacuum();
+        }
+
+        if (asset.model === 'irobot_dock') {
+            mesh = createRoombaDock();
+        }
+
+        if (asset.model === 'dummy_cube') {
+            const geo = new THREE.BoxGeometry(0.01, 0.01, 0.01);
+            const mat = new THREE.MeshPhongMaterial({ color: 0x40e0d0 });
+            mesh = new THREE.Mesh(geo, mat);
+            mesh.name = asset.ha_entity || asset.id;
+            mesh.userData.entityId = asset.ha_entity || asset.id;
         }
 
         if (asset.type === 'radar_beacon') {
@@ -45,7 +83,7 @@ export function buildAssets(iotData, state) {
                 const length = asset.length || 1;
                 mesh = createLightTube(length);
             } else if (asset.model === 'light_ring') {
-                const diameter = asset.diameter || 0.5;
+                const diameter = asset.diameter || asset.length || undefined;
                 mesh = createLightRing(diameter);
             } else if (asset.model === 'bulb') {
                 mesh = createTransparentBulb();

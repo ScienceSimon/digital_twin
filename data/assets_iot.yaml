@@ -1,11 +1,174 @@
 assets:
+  # Devices
+  - id: "my_sensor_" # Vaatwasser
+    ha_entity: "sensor.some_entity"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 2.7, y: 0.45, z: 0.35 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "my_sensor_" # Inductiekookplaat
+    ha_entity: "sensor.some_entity"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 4.60, y: 0.95, z: 1.78 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "my_sensor_" # Afzuigkap
+    ha_entity: "sensor.some_entity"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 4.75, y: 1.95, z: 1.78 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "my_sensor_" # Oven
+    ha_entity: "sensor.some_entity"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 2.7, y: 0.9, z: 2.0 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "Office_YSP1600"
+    ha_entity: "media_player.kantoor"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 2.7, y: 0.9, z: 2.0 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "Gym_Left_WD030"
+    ha_entity: "media_player.gym_l"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 4.75, y: 3.25, z: 0.5 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "Gym_Right_WD030"
+    ha_entity: "media_player.gym_r"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 4.75, y: 3.25, z: 2.4 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "Livingroom_RX_A1060"
+    ha_entity: "media_player.woonkamer"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 0.3, y: 0.4, z: 8.8 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "my_sensor_" # Yamaha Slaapkamer
+    ha_entity: "sensor.some_entity"
+    type: "device"
+    model: "dummy_cube"
+    position: { x: 0.5, y: 6, z: 8.9 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "roomba_tailor_sands"
+    type: "device"
+    model: "irobot_vacuum"
+    position: { x: 0.30, y: 2.65, z: 7.2 }
+    rotation: { x: 0, y: 0, z: 0 }
+  
+  - id: "roomba_bobby_eden"
+    type: "device"
+    model: "irobot_vacuum"
+    position: { x: 4.65, y: 0, z: 3.4 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: "roomba_dock_tailor_sands"
+    type: "device"
+    model: "irobot_dock"
+    position: { x: 0.10, y: 2.65, z: 7.2 }
+    rotation: { x: 0, y: 90, z: 0 }
+
+  - id: "roomba_dock_bobby_eden"
+    type: "device"
+    model: "irobot_dock"
+    position: { x: 4.85, y: 0, z: 3.4 }
+    rotation: { x: 0, y: 270, z: 0 }
+
   # ESP32 Modules
-  - id: "esp32_module_1"
-    friendly_name: "ESP32 Module 1"
+  - id: "esp32_node_2"
+    friendly_name: "ESP32 Node 2"
     type: "presence"
     x: 0.50
     y: 2.20
     z: 5.90
+
+
+
+  # Ethernet
+  - id: Caiway
+    type: Ethernet
+    position: { x: 0.5, y: -1, z: 1.5 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: server_rack
+    type: Ethernet
+    model: server_rack 
+    position: { x: 0.5, y: 1.8, z: 1.5 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: USW_Flex_Mini_Office
+    type: Ethernet
+    model: flex_mini
+    position: { x: 0.2, y: 3.43, z: 9 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: USW_Flex_Mini_Bedroom
+    type: Ethernet
+    model: flex_mini
+    position: { x: 0.2, y: 5.35, z: 9 }
+    rotation: { x: 0, y: 0, z: 0 }
+
+  - id: USW_Flex_Mini_Living_Room
+    type: Ethernet
+    model: flex_mini
+    position: { x: 0.15, y: 0.3, z: 9 }
+    rotation: { x: 0, y: 90, z: 0 }
+
+  - id: USW_Flex_Mini_Gym
+    type: Ethernet
+    model: flex_mini
+    position: { x: 4.75, y: 2.65, z: 2 }
+    rotation: { x: 0, y: 180, z: 0 }
+
+  - id: server_brian
+    type: Ethernet
+    model: lianli_vision
+    variant: white
+    position: { x: 1, y: 2.65, z: 6.25 }
+    rotation: { x: 0, y: 90, z: 0 }
+
+  - id: PC_office
+    type: Ethernet
+    model: lianli_vision
+    position: { x: 0.2, y: 2.65, z: 8 }
+    rotation: { x: 0, y: 180, z: 0 }
+
+  - id: PC_livingroom
+    type: Ethernet
+    model: lianli_vision
+    position: { x: 1, y: 0.05, z: 6.25 }
+    rotation: { x: 0, y: 90, z: 0 }
+
+  - id: Accespoint_Utilities
+    type: Ethernet
+    model:  u6_mesh
+    position: { x: 0.5, y: 2.1, z: 1.5 }
+    rotation: { x: 0, y: 0, z: 0 }
+  
+  - id: Accespoint_Shed
+    type: Ethernet
+    model:  u6_mesh
+    position: { x: 0, y: 1, z: -2.8 }
+    rotation: { x: 0, y: 0, z: 0 }
+  
+  - id: Accespoint_Bedroom
+    type: Ethernet
+    model:  u6_mesh
+    position: { x: 0.2, y: 6.4, z: 9 }
+    rotation: { x: 0, y: 0, z: 0 }
 
   # Temperatuursensoren (Philips Hue Motion Sensors en Nest Thermostaat)
 
@@ -383,6 +546,33 @@ assets:
     rx: 0
     ry: 0
     rz: 0
+  
+  # Light tubes 
+  - id: "light.hue_lightstrip_plus_6"
+    ha_entity: "light.hue_lightstrip_plus_6"
+    friendly_name: "light.hue_lightstrip_plus_6"
+    type: "lamp"
+    model: "light_ring"
+    diameter: 0.25
+    x: 4.55
+    y: 1.5
+    z: 3
+    rx: 0
+    ry: 0
+    rz: 90
+
+  - id: "light.hue_lightstrip_plus_7"
+    ha_entity: "light.hue_lightstrip_plus_7"
+    friendly_name: "light.hue_lightstrip_plus_7"
+    type: "lamp"
+    model: "light_ring"
+    diameter: 0.25
+    x: 4.55
+    y: 1.10
+    z: 3
+    rx: 0
+    ry: 0
+    rz: 90
 
   # Trapkast
   - id: "hue_white_spot_2"
@@ -1130,7 +1320,6 @@ assets:
     rz: 0
 
     # Jaloezieen
-
   - id: "venetianblind_0010"
     ha_entity: "cover.venetianblind_0010"
     friendly_name: "Livingroom blinds far left"

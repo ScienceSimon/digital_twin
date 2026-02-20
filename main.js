@@ -31,8 +31,9 @@ const state = {
         failed: [],
         binary: [],
         window: [], // Nog niet in gebruik
-        lights: [], 
-        blinds: [], 
+        lights: [],
+        blinds: [],
+        ethernet: [],
         all: {}
     },
     floorGroups: {},
@@ -104,6 +105,151 @@ async function init() {
         // 7. Bouw IoT + static assets
         buildAssets(state.iotData, state);
         buildAssets(state.staticData, state);
+
+        // 7b. Ethernet connections (animated data beams between assets)
+        state.ethernetBeams = [];
+        state.ethernetTubes = [];
+        state.ethernetDeviceMap = {}; // maps device ID -> { rx, tx, maxSpeed } for label updates
+        const ethernetData = restData.ethernet;
+        const connections = ethernetData?.connections || ethernetData;
+        if (Array.isArray(connections)) {
+            const assetList = state.iotData?.assets || state.iotData || [];
+            const assetMap = {};
+            assetList.forEach(a => {
+                const pos = a.position || { x: a.x || 0, y: a.y || 0, z: a.z || 0 };
+                assetMap[a.id] = new THREE.Vector3(pos.x, pos.y, pos.z);
+            });
+
+            connections.forEach(conn => {
+                const from = assetMap[conn.from];
+                const to = assetMap[conn.to];
+                if (!from || !to) return;
+
+                // Build a tube along the path
+                const path = new THREE.LineCurve3(from, to);
+                const tubeGeo = new THREE.TubeGeometry(path, 64, 0.015, 8, false);
+
+                const beamMat = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uColorA: { value: new THREE.Color(0x00aaff) },  // download blue
+                        uColorB: { value: new THREE.Color(0xa277ff) },  // upload purple
+                        uDownload: { value: 0.0 },  // 0..1 normalized (0=idle, 1=500Mbps)
+                        uUpload: { value: 0.0 },     // 0..1 normalized
+                    },
+                    vertexShader: `
+                        varying vec2 vUv;
+                        void main() {
+                            vUv = uv;
+                            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                        }
+                    `,
+                    fragmentShader: `
+                        uniform float uTime;
+                        uniform vec3 uColorA;
+                        uniform vec3 uColorB;
+                        uniform float uDownload;
+                        uniform float uUpload;
+                        varying vec2 vUv;
+
+                        float hash(float n) {
+                            return fract(sin(n) * 43758.5453);
+                        }
+
+                        void main() {
+                            vec3 bg = vec3(0.01, 0.015, 0.035);
+                            float pix = 0.0;
+                            float purpleWeight = 0.0;
+                            float totalWeight = 0.0;
+
+                            // Download pixels (blue) — traveling from WAN to server
+                            // Speed stays constant, density increases with traffic
+                            float dlDensity = 5.0 + uDownload * 55.0;
+                            float dlSpeed = 0.5;
+                            float dlThresh = 0.92 - uDownload * 0.7;
+
+                            float t1 = vUv.x + uTime * dlSpeed;
+                            float s1 = fract(t1 * dlDensity);
+                            float id1 = floor(t1 * dlDensity);
+                            float on1 = step(dlThresh, hash(id1 * 1.17 + 0.31));
+                            float p1 = smoothstep(0.04, 0.0, abs(s1 - 0.5)) * on1;
+                            pix += p1;
+                            totalWeight += p1;
+
+                            // Second download layer
+                            float t1b = vUv.x + uTime * dlSpeed * 1.3;
+                            float s1b = fract(t1b * dlDensity * 0.7);
+                            float id1b = floor(t1b * dlDensity * 0.7);
+                            float on1b = step(dlThresh + 0.05, hash(id1b * 2.31 + 7.7));
+                            float p1b = smoothstep(0.03, 0.0, abs(s1b - 0.5)) * on1b;
+                            pix += p1b;
+                            totalWeight += p1b;
+
+                            // Upload pixels (purple) — traveling from server to WAN
+                            float ulDensity = 5.0 + uUpload * 55.0;
+                            float ulSpeed = 0.5;
+                            float ulThresh = 0.92 - uUpload * 0.7;
+
+                            float t2 = vUv.x - uTime * ulSpeed;
+                            float s2 = fract(t2 * ulDensity);
+                            float id2 = floor(t2 * ulDensity);
+                            float on2 = step(ulThresh, hash(id2 * 2.71 + 5.13));
+                            float p2 = smoothstep(0.04, 0.0, abs(s2 - 0.5)) * on2;
+                            pix += p2;
+                            purpleWeight += p2;
+                            totalWeight += p2;
+
+                            // Second upload layer
+                            float t2b = vUv.x - uTime * ulSpeed * 0.8;
+                            float s2b = fract(t2b * ulDensity * 0.6);
+                            float id2b = floor(t2b * ulDensity * 0.6);
+                            float on2b = step(ulThresh + 0.05, hash(id2b * 4.13 + 2.9));
+                            float p2b = smoothstep(0.03, 0.0, abs(s2b - 0.5)) * on2b;
+                            pix += p2b;
+                            purpleWeight += p2b;
+                            totalWeight += p2b;
+
+                            // Color mix based on which direction dominates
+                            float ratio = totalWeight > 0.0 ? purpleWeight / totalWeight : 0.5;
+                            vec3 pixColor = mix(uColorA, uColorB, ratio);
+                            vec3 col = bg + pixColor * pix;
+
+                            float alpha = pix;
+                            gl_FragColor = vec4(col, alpha);
+                        }
+                    `,
+                    transparent: true,
+                    depthWrite: false
+                });
+
+                const tube = new THREE.Mesh(tubeGeo, beamMat);
+                tube.name = `eth_${conn.from}_${conn.to}`;
+                // Store the direction vector for scaling perpendicular to the beam
+                const dir = new THREE.Vector3().subVectors(to, from).normalize();
+                tube.userData.beamDir = dir;
+                state.scene.add(tube);
+                beamMat.userData = {
+                    rx: conn.rx || null,
+                    tx: conn.tx || null,
+                    maxSpeed: conn.max_speed || 500,
+                    tube: tube
+                };
+                state.ethernetBeams.push(beamMat);
+                state.ethernetTubes.push(tube);
+
+            });
+
+            // Build device-to-entity mapping: each 'to' device gets the rx/tx of its incoming connection
+            connections.forEach(conn => {
+                if (conn.to && conn.rx && conn.tx) {
+                    state.ethernetDeviceMap[conn.to] = {
+                        rx: conn.rx,
+                        tx: conn.tx,
+                        maxSpeed: conn.max_speed || 500
+                    };
+                }
+            });
+        }
 
         const lightCount = state.iotMeshes?.filter(item => item.data.type === 'lamp').length || 0;
         const blindsCount = state.iotMeshes?.filter(item => item.data.type === 'venetian_blinds').length || 0;
@@ -246,6 +392,59 @@ async function init() {
                             }
                         }
                     }
+
+                }
+
+                // Update ethernet beams that match this entity's rx/tx
+                if (attribute === 'state' && state.ethernetBeams) {
+                    state.ethernetBeams.forEach(mat => {
+                        const val = parseFloat(value);
+                        if (isNaN(val)) return;
+                        const maxSpd = mat.userData.maxSpeed || 500;
+                        const norm = Math.min(val, maxSpd) / maxSpd;
+                        if (entityId === mat.userData.rx) mat.uniforms.uDownload.value = norm;
+                        if (entityId === mat.userData.tx) mat.uniforms.uUpload.value = norm;
+
+                        // Scale tube diameter based on combined traffic (1x to 2x)
+                        const tube = mat.userData.tube;
+                        if (tube) {
+                            const combined = Math.max(mat.uniforms.uDownload.value, mat.uniforms.uUpload.value);
+                            const scale = 1.0 + combined; // 1x at idle, 2x at max
+                            const dir = tube.userData.beamDir;
+                            if (dir) {
+                                tube.scale.set(
+                                    1.0 + combined * Math.abs(1 - Math.abs(dir.x)),
+                                    1.0 + combined * Math.abs(1 - Math.abs(dir.y)),
+                                    1.0 + combined * Math.abs(1 - Math.abs(dir.z))
+                                );
+                            } else {
+                                tube.scale.setScalar(scale);
+                            }
+                        }
+                    });
+                }
+
+                // Update per-device ethernet speed labels
+                if (attribute === 'state' && state.ethernetDeviceMap) {
+                    for (const [deviceId, mapping] of Object.entries(state.ethernetDeviceMap)) {
+                        if (entityId === mapping.rx || entityId === mapping.tx) {
+                            const isRx = entityId === mapping.rx;
+                            const cls = isRx ? `eth-dl-${deviceId}` : `eth-ul-${deviceId}`;
+                            let el = _domCache.get(`ethspeed:${cls}`);
+                            if (!el) {
+                                el = document.querySelector(`.${cls}`);
+                                if (el) _domCache.set(`ethspeed:${cls}`, el);
+                            }
+                            if (el) {
+                                const val = parseFloat(value);
+                                if (!isNaN(val)) {
+                                    el.textContent = val < 1
+                                        ? `${(val * 1000).toFixed(0)} Kbps`
+                                        : `${val.toFixed(1)} Mbps`;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Sensor element lookup (lazy cache)
@@ -281,9 +480,9 @@ async function init() {
         if (sensorLijst && Array.isArray(sensorLijst)) {
             sensorLijst.forEach(sensor => {
                 const sId = sensor.id || sensor.entity_id;
-                const x = parseFloat(sensor.x) || 0;
-                const y = parseFloat(sensor.y) || 0;
-                const z = parseFloat(sensor.z) || 0;
+                const x = parseFloat(sensor.x !== undefined ? sensor.x : sensor.position?.x) || 0;
+                const y = parseFloat(sensor.y !== undefined ? sensor.y : sensor.position?.y) || 0;
+                const z = parseFloat(sensor.z !== undefined ? sensor.z : sensor.position?.z) || 0;
 
                 if (sensor.type === 'lamp') {
                     const labelText = sensor.ha_entity || sensor.id;
@@ -331,6 +530,28 @@ async function init() {
                     state.scene.add(labelObj);
                     if (!state.sensorLabels.modules) state.sensorLabels.modules = [];
                     state.sensorLabels.modules.push(labelObj);
+                } else if (sensor.type === 'Ethernet') {
+                    const labelText = sensor.friendly_name || sensor.id;
+                    const deviceMapping = state.ethernetDeviceMap?.[sensor.id];
+                    const div = document.createElement('div');
+                    div.id = `ethernet-label-${sensor.id}`;
+                    div.className = 'ethernet-label';
+                    div.innerHTML = `
+                        <div>${labelText}</div>
+                        ${deviceMapping ? `
+                        <div style="display: flex; gap: 8px; font-size: 9px; font-weight: 600; margin-top: 2px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;">
+                            <span style="color: #00aaff;">↓ <span class="eth-dl-${sensor.id}">0 Kbps</span></span>
+                            <span style="color: #a277ff;">↑ <span class="eth-ul-${sensor.id}">0 Kbps</span></span>
+                        </div>
+                        ` : ''}
+                        <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                            [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                        </div>
+                    `;
+                    const labelObj = new CSS2DObject(div);
+                    labelObj.position.set(x, y, z);
+                    state.scene.add(labelObj);
+                    state.sensorLabels.ethernet.push(labelObj);
                 } else if (sensor.type === 'radar_beacon') {
                     // No label needed for radar beacons
                 } else {
@@ -368,11 +589,10 @@ async function init() {
         // 11. Metric labels (electricity, power, etc.)
         if (state.metricsData && Array.isArray(state.metricsData)) {
             state.metricsData.forEach(metric => {
-                if (metric && (metric.id === 'dream_machine_special_edition_port_9_rx' ||
-                           metric.id === 'dream_machine_special_edition_port_9_tx' ||
-                           metric.type === 'radar_beacon')) {
-                    return;
-                }
+                if (!metric) return;
+                // Skip metrics without a position (e.g. port rx/tx entities used only for MQTT)
+                if (!metric.position) return;
+                if (metric.type === 'radar_beacon') return;
 
                 const x = metric.position?.x || 0;
                 const y = metric.position?.y || 0;
@@ -419,6 +639,7 @@ async function init() {
         // 12. Defaults: light, blind en module labels uit, coördinaten uit
         state.sensorLabels.lights.forEach(s => s.visible = false);
         state.sensorLabels.blinds.forEach(s => s.visible = false);
+        state.sensorLabels.ethernet.forEach(s => s.visible = false);
         if (state.sensorLabels.modules) state.sensorLabels.modules.forEach(s => s.visible = false);
         [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds, ...(state.sensorLabels.modules || [])].forEach(s => {
             const coord = s.element.querySelector('.coord-display');
@@ -611,6 +832,18 @@ window.engine = {
         }
     },
 
+    toggleEthernet: (visible) => {
+        if (state.ethernetTubes) {
+            state.ethernetTubes.forEach(tube => tube.visible = visible);
+        }
+    },
+
+    toggleEthernetLabels: (visible) => {
+        if (state.sensorLabels.ethernet) {
+            state.sensorLabels.ethernet.forEach(s => s.visible = visible);
+        }
+    },
+
     toggleCoordinates: (visible) => {
         document.querySelectorAll('.coord-display').forEach(el => {
             el.style.display = visible ? '' : 'none';
@@ -704,7 +937,13 @@ function animate(renderer, labelRenderer, scene, camera, controls) {
     requestAnimationFrame(() => animate(renderer, labelRenderer, scene, camera, controls));
     
     controls.update();
-    
+
+    // Animate ethernet beams
+    if (state.ethernetBeams) {
+        const t = performance.now() * 0.001;
+        state.ethernetBeams.forEach(mat => { mat.uniforms.uTime.value = t; });
+    }
+
     // Render de 3D objecten
     renderer.render(scene, camera);
     
