@@ -88,13 +88,293 @@ assets:
     rotation: { x: 0, y: 270, z: 0 }
 
   # ESP32 Modules
-  - id: "esp32_node_2"
-    friendly_name: "ESP32 Node 2"
+  # Level 0 - Kitchen & Border Hubs
+  - id: "esp0_01"
+    model: "S3-BME"
+    friendly_name: "Kitchen Plinth East"
+    location: "Kitchen"
+    type: "presence"
+    x: 4.90
+    y: 0.15
+    z: 0.10
+
+  - id: "esp0_02"
+    model: "standard"
+    friendly_name: "Kitchen Plinth West"
+    location: "Kitchen"
+    type: "presence"
+    x: 2.50
+    y: 0.15
+    z: 0.10
+
+  - id: "esp0_03_A"
+    model: "standard"
+    friendly_name: "Border Plinth North"
+    location: "Kitchen/Living Border"
+    type: "presence"
+    x: 2.45
+    y: 0.15
+    z: 2.90
+
+  - id: "esp0_03_B"
+    model: "standard"
+    friendly_name: "Border Plinth South"
+    location: "Kitchen/Living Border"
+    type: "presence"
+    x: 2.45
+    y: 0.15
+    z: 2.90
+
+# Level 0 - Cabinet Hub
+  - id: "esp0_04_A"
+    model: "S3-BME"
+    friendly_name: "Cabinet Hub North"
+    location: "Kitchen/Living Border"
+    type: "presence"
+    x: 4.45
+    y: 1.88
+    z: 3.10
+
+  - id: "esp0_04_B"
+    model: "standard"
+    friendly_name: "Cabinet Hub South"
+    location: "Kitchen/Living Border"
+    type: "presence"
+    x: 4.45
+    y: 1.88
+    z: 3.10
+
+# Level 0 - Living Room (Walls)
+  - id: "esp0_05"
+    model: "standard"
+    friendly_name: "Living West Mid-A"
+    location: "Living Room"
+    type: "presence"
+    x: 0.05
+    y: 0.60
+    z: 6.00
+
+  - id: "esp0_06"
+    model: "standard"
+    friendly_name: "Living West Mid-B"
+    location: "Living Room"
+    type: "presence"
+    x: 0.05
+    y: 0.60
+    z: 8.50
+
+  - id: "esp0_07"
+    model: "standard"
+    friendly_name: "Living West South"
+    location: "Living Room"
+    type: "presence"
+    x: 0.05
+    y: 2.50
+    z: 11.15
+
+  - id: "esp0_08"
+    model: "standard"
+    friendly_name: "Living South-East Corner"
+    location: "Living Room"
+    type: "presence"
+    x: 4.90
+    y: 2.50
+    z: 11.15
+
+  - id: "esp0_09"
+    model: "standard"
+    friendly_name: "Living South-Mid"
+    location: "Living Room"
+    type: "presence"
+    x: 2.50
+    y: 2.50
+    z: 11.15
+
+# Level 0 - Hallway & Stairs
+  - id: "esp0_10"
+    model: "standard"
+    friendly_name: "Hallway Front"
+    location: "Hallway"
+    type: "presence"
+    x: 2.20
+    y: 0.50
+    z: 2.05
+
+  - id: "esp0_15"
+    model: "standard"
+    friendly_name: "Meterkast Scout"
+    location: "Hallway"
+    type: "presence"
+    x: 0.50
+    y: 1.80
+    z: 1.60
+
+  - id: "esp0_16"
+    model: "standard"
+    friendly_name: "Under Stairs Lower"
+    location: "Stairs"
     type: "presence"
     x: 0.50
     y: 2.20
     z: 5.90
 
+  - id: "esp0_17"
+    model: "standard"
+    friendly_name: "Under Stairs Mid"
+    location: "Stairs"
+    type: "presence"
+    x: 1.50
+    y: 1.80
+    z: 2.50
+
+# Level 1 - Gym
+  - id: "esp1_01"
+    model: "S3-BME"
+    friendly_name: "Gym North-West"
+    location: "Gym"
+    type: "presence"
+    x: 0.05
+    y: 5.13
+    z: 0.05
+
+  - id: "esp1_02"
+    model: "standard"
+    friendly_name: "Gym North-East"
+    location: "Gym"
+    type: "presence"
+    x: 4.90
+    y: 5.13
+    z: 0.05
+
+  - id: "esp1_03"
+    model: "standard"
+    friendly_name: "Gym South-West"
+    location: "Gym"
+    type: "presence"
+    x: 0.05
+    y: 5.13
+    z: 2.90
+
+  - id: "esp1_04"
+    model: "standard"
+    friendly_name: "Gym Glass Scout"
+    location: "Gym"
+    type: "presence"
+    x: 2.15
+    y: 3.63
+    z: 0.00
+
+# Level 1 - Office
+  - id: "esp1_05"
+    model: "S3-BME"
+    friendly_name: "Office North-West"
+    location: "Office"
+    type: "presence"
+    x: 0.05
+    y: 5.13
+    z: 6.10
+
+  - id: "esp1_06"
+    model: "standard"
+    friendly_name: "Office Glass Scout"
+    location: "Office"
+    type: "presence"
+    x: 2.20
+    y: 3.63
+    z: 9.25
+
+  - id: "esp1_07"
+    model: "standard"
+    friendly_name: "Office South-West"
+    location: "Office"
+    type: "presence"
+    x: 0.00
+    y: 5.13
+    z: 9.25
+
+# Level 1 - Walk-in Closet
+  - id: "esp1_09"
+    model: "standard"
+    friendly_name: "Walk-in North"
+    location: "Walk-in Closet"
+    type: "presence"
+    x: 4.75
+    y: 3.60
+    z: 5.00
+
+  - id: "esp1_10"
+    model: "standard"
+    friendly_name: "Walk-in South-East"
+    location: "Walk-in Closet"
+    type: "presence"
+    x: 4.90
+    y: 5.13
+    z: 9.25
+
+  - id: "esp1_11"
+    model: "standard"
+    friendly_name: "Walk-in South-West"
+    location: "Walk-in Closet"
+    type: "presence"
+    x: 2.30
+    y: 5.13
+    z: 9.25
+
+# Level 2 - Laundry
+  - id: "esp2_01"
+    model: "standard"
+    friendly_name: "Laundry North-West"
+    location: "Laundry Room"
+    type: "presence"
+    x: 0.05
+    y: 7.40
+    z: 0.05
+
+  - id: "esp2_03"
+    model: "standard"
+    friendly_name: "Laundry South"
+    location: "Laundry Room"
+    type: "presence"
+    x: 2.50
+    y: 7.40
+    z: 2.90
+
+# Level 2 - Bedroom
+  - id: "esp2_04"
+    model: "S3-BME"
+    friendly_name: "Bedroom North-West"
+    location: "Bedroom"
+    type: "presence"
+    x: 1.05
+    y: 7.66
+    z: 3.00
+
+  - id: "esp2_05"
+    model: "standard"
+    friendly_name: "Bedroom North-East"
+    location: "Bedroom"
+    type: "presence"
+    x: 4.90
+    y: 5.46
+    z: 3.00
+
+  - id: "esp2_07"
+    model: "standard"
+    friendly_name: "Bedroom South-East"
+    location: "Bedroom"
+    type: "presence"
+    x: 4.90
+    y: 7.66
+    z: 9.25
+
+  - id: "esp2_08"
+    model: "standard"
+    friendly_name: "Bedroom South-West"
+    location: "Bedroom"
+    type: "presence"
+    x: 0.05
+    y: 7.66
+    z: 9.25
 
 
   # Ethernet
