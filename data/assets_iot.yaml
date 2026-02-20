@@ -90,7 +90,7 @@ assets:
   # ESP32 Modules
   # Level 0 - Kitchen & Border Hubs
   - id: "esp0_01"
-    model: "S3-BME"
+    model: "S3"
     friendly_name: "Kitchen Plinth East"
     location: "Kitchen"
     type: "presence"
@@ -127,7 +127,7 @@ assets:
 
 # Level 0 - Cabinet Hub
   - id: "esp0_04_A"
-    model: "S3-BME"
+    model: "S3"
     friendly_name: "Cabinet Hub North"
     location: "Kitchen/Living Border"
     type: "presence"
@@ -229,7 +229,7 @@ assets:
 
 # Level 1 - Gym
   - id: "esp1_01"
-    model: "S3-BME"
+    model: "S3"
     friendly_name: "Gym North-West"
     location: "Gym"
     type: "presence"
@@ -266,7 +266,7 @@ assets:
 
 # Level 1 - Office
   - id: "esp1_05"
-    model: "S3-BME"
+    model: "S3"
     friendly_name: "Office North-West"
     location: "Office"
     type: "presence"
@@ -331,17 +331,17 @@ assets:
     z: 0.05
 
   - id: "esp2_03"
-    model: "standard"
+    model: "S3"
     friendly_name: "Laundry South"
     location: "Laundry Room"
     type: "presence"
-    x: 2.50
-    y: 7.40
-    z: 2.90
+    x: 4.70
+    y: 6.40
+    z: 2.00
 
 # Level 2 - Bedroom
   - id: "esp2_04"
-    model: "S3-BME"
+    model: "S3"
     friendly_name: "Bedroom North-West"
     location: "Bedroom"
     type: "presence"
