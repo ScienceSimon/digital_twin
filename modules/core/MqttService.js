@@ -32,6 +32,7 @@ export class MqttService {
                 // Luister naar alle sensoren uit je YAML
                 this.client.subscribe("homeassistant/#");
                 this.client.subscribe("Radar_Location/#");
+                this.client.subscribe("Position/#");
             },
             onFailure: () => {
                 // Connection failure
@@ -64,10 +65,12 @@ export class MqttService {
     _handleMessage(message) {
     const topic = message.destinationName;
     const payload = message.payloadString;
-    if (topic.startsWith('Radar_Location/')) {
+    // if (topic.startsWith('Radar_Location/')) {
+    if (topic.startsWith('Position/')) {    
             const entityId = topic;             
             if (this.onMessageCallback) {
-                this.onMessageCallback(entityId, payload, 'position');
+                // this.onMessageCallback(entityId, payload, 'position');
+                this.onMessageCallback(entityId, payload, 'Location');
             }
             return;
         }

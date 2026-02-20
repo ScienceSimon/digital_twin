@@ -314,7 +314,8 @@ async function init() {
                 }
 
                 // Radar beacon position
-                if (entityId === 'Radar_Location/Office') {
+                // if (entityId === 'Radar_Location/Office') {
+                if (entityId === 'Position/Location') {
                     try {
                         const coords = typeof value === 'string' ? JSON.parse(value) : value;
                         const beaconEntry = state.iotMeshes.find(item => item.data.id === 'radar_office_position');
