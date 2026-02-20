@@ -566,6 +566,17 @@
             pointer-events: none;
         }
 
+        .device-label {
+            padding: 3px 6px;
+            background: rgba(40, 35, 50, 0.9);
+            border-radius: 4px;
+            font-size: 8px;
+            color: #c8b8e0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
         .module-label {
             padding: 3px 6px;
             background: rgba(20, 40, 30, 0.9);
@@ -756,6 +767,10 @@
         <label class="toggle-box">
             <input type="checkbox" onchange="window.engine.toggleEthernetLabels(this.checked)">
             <span>Ethernet Labels</span>
+        </label>
+        <label class="toggle-box">
+            <input type="checkbox" onchange="window.engine.toggleDevices(this.checked)">
+            <span>Device Labels</span>
         </label>
         <label class="toggle-box error-toggle">
             <input type="checkbox" checked onchange="window.engine.toggleFailedSensors(this.checked)">
