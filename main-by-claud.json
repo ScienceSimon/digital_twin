@@ -512,9 +512,8 @@ async function init() {
                         const ids = existing ? existing.split(' ') : [];
                         ids.push(sensor.binary_id);
                         match.element.setAttribute('data-binary-ids', ids.join(' '));
-                        // Cache binary sensor ref + status dot at creation time
-                        const dotEl = match.element.querySelector('.status-dot');
-                        _labelDomRefs.set(`sensor:${sensor.binary_id}`, { element: match.element, dotEl });
+                        // Cache binary sensor ref at creation time
+                        _labelDomRefs.set(`sensor:${sensor.binary_id}`, { element: match.element });
                     }
                 }
             });
@@ -911,7 +910,7 @@ function createMusicNotes(position, noteTexture) {
         offsets[i * 3 + 1] = Math.random();
         offsets[i * 3 + 2] = (Math.random() - 0.5) * 0.4;
         phases[i] = Math.random() * Math.PI * 2;
-        sizes[i] = 1.5 + Math.random() * 2;
+        sizes[i] = 5 + Math.random() * 7;
         noteTypes[i] = Math.floor(Math.random() * 4);
     }
 
@@ -1066,11 +1065,15 @@ function updateLabels(camera) {
             }
         } else if (key.startsWith('sensor:')) {
             const sensorId = key.slice(7);
-            // Motion/binary sensor update — toggle status-dot green/red
+            // Motion/binary sensor update
             const motionVal = state.dataStore[`${sensorId}:motion`] ?? state.dataStore[`${sensorId}:state`];
-            if (motionVal !== undefined && refs.dotEl) {
-                const isOn = motionVal === 'on' || motionVal === 'occupied' || motionVal === 'true';
-                refs.dotEl.className = `status-dot ${isOn ? 'status-detected' : 'status-clear'}`;
+            if (motionVal !== undefined && refs.element) {
+                const isOn = motionVal === 'on' || motionVal === 'occupied';
+                if (isOn) {
+                    refs.element.classList.add('motion-active');
+                } else {
+                    refs.element.classList.remove('motion-active');
+                }
             }
         }
     }
