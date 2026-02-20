@@ -32,7 +32,7 @@ assets:
     ha_entity: "media_player.kantoor"
     type: "device"
     model: "dummy_cube"
-    position: { x: 2.7, y: 0.9, z: 2.0 }
+    position: { x: 0.3, y: 3.5, z: 7.9 }
     rotation: { x: 0, y: 0, z: 0 }
 
   - id: "Gym_Left_WD030"
