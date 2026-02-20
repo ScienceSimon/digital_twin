@@ -20,8 +20,9 @@ export async function loadAllData() {
     const rest = Promise.all([
         loadYaml('data/assets_iot.yaml').catch(() => ({})),
         loadYaml('data/assets_static.yaml').catch(() => ({})),
-        loadYaml('data/statestream.yaml').catch(() => ({}))
-    ]).then(([iot, staticData, metrics]) => ({ iot, static: staticData, metrics }));
+        loadYaml('data/statestream.yaml').catch(() => ({})),
+        loadYaml('data/ethernet.yaml').catch(() => ({}))
+    ]).then(([iot, staticData, metrics, ethernet]) => ({ iot, static: staticData, metrics, ethernet }));
 
     return { house, rest };
 }

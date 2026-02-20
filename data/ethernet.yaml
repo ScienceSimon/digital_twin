@@ -1,0 +1,74 @@
+connections:
+  - from: Caiway
+    to: server_rack
+    #color: "#00aaff"
+    rx: dream_machine_special_edition_port_9_rx
+    tx: dream_machine_special_edition_port_9_tx
+    max_speed: 250
+
+# 1st layer
+  - from: server_rack
+    to: USW_Flex_Mini_Gym
+    color: "#00aaff"
+    rx: dream_machine_special_edition_port_2_rx
+    tx: dream_machine_special_edition_port_2_tx
+    max_speed: 100
+
+  - from: server_rack
+    to: USW_Flex_Mini_Living_Room
+    color: "#00aaff"
+    rx: dream_machine_special_edition_port_3_rx
+    tx: dream_machine_special_edition_port_3_tx
+    max_speed: 100
+
+  - from: server_rack
+    to: USW_Flex_Mini_Office
+    color: "#00aaff"
+    rx: dream_machine_special_edition_port_4_rx
+    tx: dream_machine_special_edition_port_4_tx
+    max_speed: 100
+
+  - from: server_rack
+    to: PC_livingroom
+    color: "#00aaff"
+    rx: dream_machine_special_edition_port_5_rx
+    tx: dream_machine_special_edition_port_5_tx
+    max_speed: 100
+  
+  - from: server_rack
+    to: USW_Flex_Mini_Bedroom
+    color: "#00aaff"
+    rx: dream_machine_special_edition_port_6_rx
+    tx: dream_machine_special_edition_port_6_tx
+    max_speed: 100
+
+  - from: server_rack
+    to: Accespoint_Utilities
+    color: "#00aaff"
+    rx: dream_machine_special_edition_port_7_rx
+    tx: dream_machine_special_edition_port_7_tx
+    max_speed: 100
+
+
+
+# 2nd Layer
+  - from: USW_Flex_Mini_Office
+    to: PC_office
+    color: "#00aaff"
+    rx: usw_flex_mini_kantoor_port_4_rx
+    tx: usw_flex_mini_kantoor_port_4_tx
+    max_speed: 100
+
+  - from: USW_Flex_Mini_Office
+    to: server_brian
+    color: "#00aaff"
+    rx: usw_flex_mini_kantoor_port_5_rx
+    tx: usw_flex_mini_kantoor_port_5_tx
+    max_speed: 100
+
+  - from: USW_Flex_Mini_Bedroom
+    to: Accespoint_Bedroom
+    color: "#00aaff"
+    rx: usw_flex_mini_zolder_port_3_rx
+    tx: usw_flex_mini_zolder_port_3_tx
+    max_speed: 100

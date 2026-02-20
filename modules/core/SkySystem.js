@@ -176,7 +176,10 @@ export class SkySystem {
             },
             vertexShader: `
                 attribute float size;
+                varying float vWorldY;
                 void main() {
+                    vec4 worldPos = modelMatrix * vec4(position, 1.0);
+                    vWorldY = worldPos.y;
                     vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
                     gl_PointSize = size * 3.0;
                     gl_Position = projectionMatrix * mvPosition;
@@ -184,11 +187,15 @@ export class SkySystem {
             `,
             fragmentShader: `
                 uniform float uOpacity;
+                varying float vWorldY;
                 void main() {
+                    // Hide stars below horizon
+                    if (vWorldY < 0.0) discard;
                     float d = length(gl_PointCoord - vec2(0.5));
                     if (d > 0.5) discard;
-                    // Bright core with thin soft edge
-                    float alpha = smoothstep(0.5, 0.3, d) * uOpacity;
+                    // Fade stars near horizon for smooth transition
+                    float horizonFade = smoothstep(0.0, 15.0, vWorldY);
+                    float alpha = smoothstep(0.5, 0.3, d) * uOpacity * horizonFade;
                     // Boost brightness in center for a glow effect
                     float core = smoothstep(0.3, 0.0, d);
                     vec3 col = mix(vec3(1.0, 0.95, 0.7), vec3(1.0, 1.0, 0.95), core);
