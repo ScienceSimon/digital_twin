@@ -191,73 +191,64 @@ assets:
     z: 11.15
 
 # Level 0 - Hallway & Stairs
-  - id: "esp0_10"
+  - id: "ESP_Node_15"
     model: "standard"
-    friendly_name: "Hallway Front"
+    friendly_name: "ESP_Node_15"
     location: "Hallway"
     type: "presence"
     x: 2.20
     y: 0.50
     z: 2.05
 
-  - id: "esp0_15"
+  - id: "ESP_Node_24"
     model: "standard"
-    friendly_name: "Meterkast Scout"
+    friendly_name: "ESP_Node_24"
     location: "Hallway"
     type: "presence"
     x: 0.50
     y: 1.80
     z: 1.60
 
-  - id: "esp0_16"
+  - id: "ESP_Node_25"
     model: "standard"
-    friendly_name: "Under Stairs Lower"
+    friendly_name: "ESP_Node_25"
     location: "Stairs"
     type: "presence"
     x: 0.50
     y: 2.20
     z: 5.90
 
-  - id: "esp0_17"
-    model: "standard"
-    friendly_name: "Under Stairs Mid"
-    location: "Stairs"
-    type: "presence"
-    x: 1.50
-    y: 1.80
-    z: 2.50
-
 # Level 1 - Gym
-  - id: "esp1_01"
-    model: "S3"
-    friendly_name: "Gym North-West"
+  - id: "ESP_Node_17"
+    model: "standard"
+    friendly_name: "ESP_Node_17"
     location: "Gym"
     type: "presence"
     x: 0.05
-    y: 5.13
+    y: 4.50
     z: 0.05
 
-  - id: "esp1_02"
+  - id: "ESP_Node_18"
     model: "standard"
-    friendly_name: "Gym North-East"
+    friendly_name: "ESP_Node_18"
     location: "Gym"
     type: "presence"
     x: 4.90
-    y: 5.13
+    y: 3.00
     z: 0.05
 
-  - id: "esp1_03"
+  - id: "ESP_Node_19"
     model: "standard"
-    friendly_name: "Gym South-West"
+    friendly_name: "ESP_Node_19"
     location: "Gym"
     type: "presence"
-    x: 0.05
-    y: 5.13
+    x: 4.85
+    y: 3.00
     z: 2.90
 
-  - id: "esp1_04"
-    model: "standard"
-    friendly_name: "Gym Glass Scout"
+  - id: "ESP_Node_11"
+    model: "S3"
+    friendly_name: "ESP_Node_11"
     location: "Gym"
     type: "presence"
     x: 2.15
@@ -265,27 +256,27 @@ assets:
     z: 0.00
 
 # Level 1 - Office
-  - id: "esp1_05"
+  - id: "ESP_Node_2"
     model: "S3"
-    friendly_name: "Office North-West"
+    friendly_name: "ESP_Node_2"
     location: "Office"
     type: "presence"
     x: 0.05
     y: 5.13
     z: 6.10
 
-  - id: "esp1_06"
+  - id: "ESP_Node_12"
     model: "standard"
-    friendly_name: "Office Glass Scout"
+    friendly_name: "ESP_Node_12"
     location: "Office"
     type: "presence"
     x: 2.20
     y: 3.63
     z: 9.25
 
-  - id: "esp1_07"
+  - id: "ESP_Node_13"
     model: "standard"
-    friendly_name: "Office South-West"
+    friendly_name: "ESP_Node_13"
     location: "Office"
     type: "presence"
     x: 0.00
@@ -293,27 +284,27 @@ assets:
     z: 9.25
 
 # Level 1 - Walk-in Closet
-  - id: "esp1_09"
-    model: "standard"
-    friendly_name: "Walk-in North"
+  - id: "ESP_Node_10"
+    model: "S3"
+    friendly_name: "ESP_Node_10"
     location: "Walk-in Closet"
     type: "presence"
     x: 4.75
     y: 3.60
     z: 5.00
 
-  - id: "esp1_10"
+  - id: "ESP_Node_14"
     model: "standard"
-    friendly_name: "Walk-in South-East"
+    friendly_name: "ESP_Node_14"
     location: "Walk-in Closet"
     type: "presence"
     x: 4.90
     y: 5.13
     z: 9.25
 
-  - id: "esp1_11"
+  - id: "ESP_Node_16"
     model: "standard"
-    friendly_name: "Walk-in South-West"
+    friendly_name: "ESP_Node_16"
     location: "Walk-in Closet"
     type: "presence"
     x: 2.30
@@ -321,18 +312,18 @@ assets:
     z: 9.25
 
 # Level 2 - Laundry
-  - id: "esp2_01"
+  - id: "ESP_Node_23"
     model: "standard"
-    friendly_name: "Laundry North-West"
+    friendly_name: "ESP_Node_23"
     location: "Laundry Room"
     type: "presence"
     x: 0.05
     y: 7.40
     z: 0.05
 
-  - id: "esp2_03"
+  - id: "ESP_Node_9"
     model: "S3"
-    friendly_name: "Laundry South"
+    friendly_name: "ESP_Node_9"
     location: "Laundry Room"
     type: "presence"
     x: 4.70
@@ -340,36 +331,36 @@ assets:
     z: 2.00
 
 # Level 2 - Bedroom
-  - id: "esp2_04"
+  - id: "ESP_Node_4"
     model: "S3"
-    friendly_name: "Bedroom North-West"
+    friendly_name: "ESP_Node_4"
     location: "Bedroom"
     type: "presence"
-    x: 1.05
-    y: 7.66
+    x: 2.05
+    y: 5.90
     z: 3.00
 
-  - id: "esp2_05"
+  - id: "ESP_Node_20"
     model: "standard"
-    friendly_name: "Bedroom North-East"
+    friendly_name: "ESP_Node_20"
     location: "Bedroom"
     type: "presence"
     x: 4.90
-    y: 5.46
+    y: 5.90
     z: 3.00
 
-  - id: "esp2_07"
+  - id: "ESP_Node_21"
     model: "standard"
-    friendly_name: "Bedroom South-East"
+    friendly_name: "ESP_Node_21"
     location: "Bedroom"
     type: "presence"
     x: 4.90
     y: 7.66
     z: 9.25
 
-  - id: "esp2_08"
+  - id: "ESP_Node_22"
     model: "standard"
-    friendly_name: "Bedroom South-West"
+    friendly_name: "ESP_Node_22"
     location: "Bedroom"
     type: "presence"
     x: 0.05
