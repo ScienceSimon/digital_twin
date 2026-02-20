@@ -10,9 +10,8 @@ import { updateSpotAppearance, createRadarBeacon } from './modules/models/modelF
 import { gsap } from 'gsap';
 import { SkySystem } from './modules/core/SkySystem.js';
 
-// DOM element cache for O(1) lookups in MQTT hot path
-const _domCache = new Map();
-let _netwerkContainer = null;
+// DOM refs cached at label creation time — zero querySelector at runtime
+const _labelDomRefs = new Map();
 
 const state = {
     scene: null,
@@ -40,6 +39,7 @@ const state = {
     wallsFullHeight: false,
     userLoc: { lat: 52.0, lon: 4.3 },
     blindStates: {},
+    dataStore: {},
     sunOffset: 1.15 * Math.PI,
 };
 
@@ -271,6 +271,12 @@ async function init() {
             state.mqtt.setSensorData(sensorLijst);
 
             state.mqtt.onMessageCallback = (entityId, value, attribute) => {
+                // Store all values in dataStore — DOM updates happen in updateLabels()
+                state.dataStore[`${entityId}:${attribute}`] = value;
+
+                // --- 3D mesh updates (immediate, no DOM) ---
+
+                // Blinds animation
                 const blindObject = state.scene.getObjectByName('cover.' + entityId) ||
                         state.scene.getObjectByName(entityId);
 
@@ -307,7 +313,7 @@ async function init() {
                     }
                 }
 
-                // --- Radar / Locatie Logica ---
+                // Radar beacon position
                 if (entityId === 'Radar_Location/Office') {
                     try {
                         const coords = typeof value === 'string' ? JSON.parse(value) : value;
@@ -327,7 +333,7 @@ async function init() {
                     }
                 }
 
-                // Zoek de lamp
+                // Light mesh appearance
                 const nameWithPrefix = 'light.' + entityId;
                 const lightMesh = state.scene.getObjectByName(nameWithPrefix) || state.scene.getObjectByName(entityId);
 
@@ -336,66 +342,7 @@ async function init() {
                     return;
                 }
 
-                // Metric labels (power, electricity, etc.)
-                let metricElement = _domCache.get(`metric:${entityId}`);
-                if (!metricElement) {
-                    metricElement = document.querySelector(`[data-metric-id="${entityId}"]`);
-                    if (metricElement) _domCache.set(`metric:${entityId}`, metricElement);
-                }
-
-                if (metricElement && attribute === 'state') {
-                    const valueEl = metricElement.querySelector('.metric-value');
-                    const iconEl = metricElement.querySelector('.metric-icon');
-
-                    if (valueEl) {
-                        const numValue = parseFloat(value);
-
-                        valueEl.style.filter = 'none';
-                        valueEl.style.webkitFilter = 'none';
-                        valueEl.style.textShadow = 'none';
-                        valueEl.style.transform = 'translateZ(0)';
-                        valueEl.style.backfaceVisibility = 'hidden';
-
-                        if (!isNaN(numValue)) {
-                            valueEl.textContent = `${numValue.toFixed(2)} kW`;
-                            const statusColor = (numValue > 0) ? '#ec3c3c' : '#1dbe1d';
-                            valueEl.style.color = statusColor;
-                            if (iconEl) iconEl.style.color = statusColor;
-                        } else {
-                            valueEl.textContent = value;
-                            valueEl.style.color = '#ffffff';
-                        }
-                    }
-                    return;
-                }
-
-                // --- Netwerk Logica ---
-                if (!_netwerkContainer) {
-                    _netwerkContainer = document.querySelector('[data-metric-id="netto_stroomverbruik"]');
-                }
-                if (_netwerkContainer && attribute === 'state') {
-                    const isDownload = entityId === 'dream_machine_special_edition_port_9_rx';
-                    const isUpload = entityId === 'dream_machine_special_edition_port_9_tx';
-
-                    if (isDownload || isUpload) {
-                        const targetClass = isDownload ? '.download-speed' : '.upload-speed';
-                        const el = _netwerkContainer.querySelector(targetClass);
-
-                        if (el) {
-                            const val = parseFloat(value);
-                            if (!isNaN(val)) {
-                                el.textContent = val < 1
-                                    ? `${(val * 1000).toFixed(0)} Kbps`
-                                    : `${val.toFixed(1)} Mbps`;
-                            } else {
-                                el.textContent = '--';
-                            }
-                        }
-                    }
-
-                }
-
-                // Update ethernet beams that match this entity's rx/tx
+                // Ethernet beam shader uniforms + tube scaling
                 if (attribute === 'state' && state.ethernetBeams) {
                     state.ethernetBeams.forEach(mat => {
                         const val = parseFloat(value);
@@ -405,11 +352,10 @@ async function init() {
                         if (entityId === mat.userData.rx) mat.uniforms.uDownload.value = norm;
                         if (entityId === mat.userData.tx) mat.uniforms.uUpload.value = norm;
 
-                        // Scale tube diameter based on combined traffic (1x to 2x)
                         const tube = mat.userData.tube;
                         if (tube) {
                             const combined = Math.max(mat.uniforms.uDownload.value, mat.uniforms.uUpload.value);
-                            const scale = 1.0 + combined; // 1x at idle, 2x at max
+                            const scale = 1.0 + combined;
                             const dir = tube.userData.beamDir;
                             if (dir) {
                                 tube.scale.set(
@@ -424,55 +370,8 @@ async function init() {
                     });
                 }
 
-                // Update per-device ethernet speed labels
-                if (attribute === 'state' && state.ethernetDeviceMap) {
-                    for (const [deviceId, mapping] of Object.entries(state.ethernetDeviceMap)) {
-                        if (entityId === mapping.rx || entityId === mapping.tx) {
-                            const isRx = entityId === mapping.rx;
-                            const cls = isRx ? `eth-dl-${deviceId}` : `eth-ul-${deviceId}`;
-                            let el = _domCache.get(`ethspeed:${cls}`);
-                            if (!el) {
-                                el = document.querySelector(`.${cls}`);
-                                if (el) _domCache.set(`ethspeed:${cls}`, el);
-                            }
-                            if (el) {
-                                const val = parseFloat(value);
-                                if (!isNaN(val)) {
-                                    el.textContent = val < 1
-                                        ? `${(val * 1000).toFixed(0)} Kbps`
-                                        : `${val.toFixed(1)} Mbps`;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Sensor element lookup (lazy cache)
-                let element = _domCache.get(`sensor:${entityId}`);
-                if (!element) {
-                    element = document.getElementById(`temp-pill-${entityId}`) ||
-                              document.querySelector(`[data-binary-ids~="${entityId}"]`);
-                    if (element) _domCache.set(`sensor:${entityId}`, element);
-                }
-                if (!element) return;
-
-                if (attribute === 'state') {
-                    const isMotion = entityId.includes('beweging') || entityId.includes('motion');
-                    if (isMotion) {
-                        if (value === 'on' || value === 'occupied') {
-                            element.classList.add('motion-active');
-                        } else {
-                            element.classList.remove('motion-active');
-                        }
-                    } else {
-                        const tempSpan = element.querySelector('.temp-value');
-                        const temp = parseFloat(value);
-                        if (tempSpan && !isNaN(temp)) {
-                            tempSpan.textContent = `${temp.toFixed(1)}°C`;
-                            element.classList.remove('sensor-failed');
-                        }
-                    }
-                }
+                // All DOM updates (metrics, WAN speeds, per-device speeds, temps, motion)
+                // are now handled by updateLabels() in the animate loop via state.dataStore
             };
         }
 
@@ -530,6 +429,22 @@ async function init() {
                     state.scene.add(labelObj);
                     if (!state.sensorLabels.modules) state.sensorLabels.modules = [];
                     state.sensorLabels.modules.push(labelObj);
+                } else if (sensor.type === 'device') {
+                    const labelText = sensor.friendly_name || sensor.name || sensor.id;
+                    const div = document.createElement('div');
+                    div.id = `device-label-${sensor.id}`;
+                    div.className = 'device-label';
+                    div.innerHTML = `
+                        <div>${labelText}</div>
+                        <div class="coord-display" style="font-size: 6px; font-family: monospace; opacity: 0.5;">
+                            [${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}]
+                        </div>
+                    `;
+                    const labelObj = new CSS2DObject(div);
+                    labelObj.position.set(x, y, z);
+                    state.scene.add(labelObj);
+                    if (!state.sensorLabels.devices) state.sensorLabels.devices = [];
+                    state.sensorLabels.devices.push(labelObj);
                 } else if (sensor.type === 'Ethernet') {
                     const labelText = sensor.friendly_name || sensor.id;
                     const deviceMapping = state.ethernetDeviceMap?.[sensor.id];
@@ -552,6 +467,13 @@ async function init() {
                     labelObj.position.set(x, y, z);
                     state.scene.add(labelObj);
                     state.sensorLabels.ethernet.push(labelObj);
+                    // Cache ethernet speed span refs at creation time
+                    if (deviceMapping) {
+                        const dlSpan = div.querySelector(`.eth-dl-${sensor.id}`);
+                        const ulSpan = div.querySelector(`.eth-ul-${sensor.id}`);
+                        if (dlSpan) _labelDomRefs.set(`ethspeed:eth-dl-${sensor.id}`, { element: dlSpan, labelObj });
+                        if (ulSpan) _labelDomRefs.set(`ethspeed:eth-ul-${sensor.id}`, { element: ulSpan, labelObj });
+                    }
                 } else if (sensor.type === 'radar_beacon') {
                     // No label needed for radar beacons
                 } else {
@@ -568,6 +490,9 @@ async function init() {
                     labelObj.position.set(x, y, z);
                     state.scene.add(labelObj);
                     state.sensorLabels.temperature.push(labelObj);
+                    // Cache temp value ref at creation time
+                    const tempValue = div.querySelector('.temp-value');
+                    if (tempValue) _labelDomRefs.set(`temp:${sId}`, { element: div, tempValue, labelObj });
                 }
 
                 // Koppel detectie-dots aan kamerlabels
@@ -581,6 +506,8 @@ async function init() {
                         const ids = existing ? existing.split(' ') : [];
                         ids.push(sensor.binary_id);
                         match.element.setAttribute('data-binary-ids', ids.join(' '));
+                        // Cache binary sensor ref at creation time
+                        _labelDomRefs.set(`sensor:${sensor.binary_id}`, { element: match.element });
                     }
                 }
             });
@@ -633,6 +560,19 @@ async function init() {
 
                 if (!state.sensorLabels.metrics) state.sensorLabels.metrics = [];
                 state.sensorLabels.metrics.push(labelObj);
+
+                // Cache metric DOM refs at creation time
+                const metricValue = div.querySelector('.metric-value');
+                const metricIcon = div.querySelector('.metric-icon');
+                _labelDomRefs.set(`metric:${metric.id}`, { element: div, metricValue, metricIcon, labelObj });
+
+                // Cache WAN speed refs if this is the netto_stroomverbruik metric
+                if (metric.id === 'netto_stroomverbruik') {
+                    const dlEl = div.querySelector('.download-speed');
+                    const ulEl = div.querySelector('.upload-speed');
+                    if (dlEl) _labelDomRefs.set('wan:download', { element: dlEl, labelObj });
+                    if (ulEl) _labelDomRefs.set('wan:upload', { element: ulEl, labelObj });
+                }
             });
         }
 
@@ -641,7 +581,8 @@ async function init() {
         state.sensorLabels.blinds.forEach(s => s.visible = false);
         state.sensorLabels.ethernet.forEach(s => s.visible = false);
         if (state.sensorLabels.modules) state.sensorLabels.modules.forEach(s => s.visible = false);
-        [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds, ...(state.sensorLabels.modules || [])].forEach(s => {
+        if (state.sensorLabels.devices) state.sensorLabels.devices.forEach(s => s.visible = false);
+        [...state.sensorLabels.temperature, ...state.sensorLabels.lights, ...state.sensorLabels.blinds, ...(state.sensorLabels.modules || []), ...(state.sensorLabels.devices || [])].forEach(s => {
             const coord = s.element.querySelector('.coord-display');
             if (coord) coord.style.display = 'none';
         });
@@ -659,38 +600,12 @@ async function init() {
     }
 }
   
-    // Functie voor Temperatuur/motion sensoren
+    // Functie voor Temperatuur/motion sensoren — stores to dataStore, DOM update in updateLabels()
 export function updateTemperatureDisplay(sensorId, value, type = 'temperature') {
-    const element = document.getElementById(`temp-pill-${sensorId}`) ||
-                    document.querySelector(`[data-binary-ids~="${sensorId}"]`);
-
-    if (!element) return;
-
-    const valueEl = element.querySelector('.temp-value');
-    const dotEl = element.querySelector('.status-dot');
-
     if (type === 'temperature') {
-        const temp = parseFloat(value);
-        if (!isNaN(temp) && valueEl) {
-            valueEl.innerText = `${temp.toFixed(1)}°C`;
-
-            // Kleur berekening (van koud blauw naar warm rood/oranje)
-            const t = Math.max(0, Math.min(1, (temp - 15) / (30 - 15)));
-            const r = Math.floor(173 + (255 - 173) * t);
-            const g = Math.floor(216 + (0 - 216) * t);
-            const b = Math.floor(230 + (0 - 230) * t);
-            const color = `rgb(${r}, ${g}, ${b})`;
-
-            // Pas kleur toe
-            element.style.color = color;
-        }
-    }
-
-    if (type === 'motion' || type === 'binary') {
-        const isOn = (value === 'on' || value === 'occupied' || value === 'true');
-        if (dotEl) {
-            dotEl.className = `status-dot ${isOn ? 'status-detected' : 'status-clear'}`;
-        }
+        state.dataStore[`${sensorId}:temperature`] = value;
+    } else {
+        state.dataStore[`${sensorId}:motion`] = value;
     }
 }
 
@@ -844,6 +759,12 @@ window.engine = {
         }
     },
 
+    toggleDevices: (visible) => {
+        if (state.sensorLabels.devices) {
+            state.sensorLabels.devices.forEach(s => s.visible = visible);
+        }
+    },
+
     toggleCoordinates: (visible) => {
         document.querySelectorAll('.coord-display').forEach(el => {
             el.style.display = visible ? '' : 'none';
@@ -931,11 +852,110 @@ window.engine = {
     }
 };
 
+// --- THROTTLED LABEL UPDATES (max 10fps, frustum-culled) ---
+let _lastLabelUpdate = 0;
+const _frustum = new THREE.Frustum();
+const _projScreenMatrix = new THREE.Matrix4();
+
+function updateLabels(camera) {
+    const now = performance.now();
+    if (now - _lastLabelUpdate < 100) return; // 10fps max
+    _lastLabelUpdate = now;
+
+    // Build frustum from camera
+    _projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+    _frustum.setFromProjectionMatrix(_projScreenMatrix);
+
+    for (const [key, refs] of _labelDomRefs) {
+        // Frustum check: skip if CSS2DObject is not visible or outside camera view
+        if (refs.labelObj && (!refs.labelObj.visible || !_frustum.containsPoint(refs.labelObj.position))) continue;
+
+        if (key.startsWith('metric:')) {
+            const entityId = key.slice(7); // e.g. "netto_stroomverbruik"
+            const val = state.dataStore[`${entityId}:state`];
+            if (val !== undefined && refs.metricValue) {
+                const num = parseFloat(val);
+                if (!isNaN(num)) {
+                    refs.metricValue.textContent = `${num.toFixed(2)} kW`;
+                    const color = num > 0 ? '#ec3c3c' : '#1dbe1d';
+                    refs.metricValue.style.color = color;
+                    if (refs.metricIcon) refs.metricIcon.style.color = color;
+                } else {
+                    refs.metricValue.textContent = val;
+                    refs.metricValue.style.color = '#ffffff';
+                }
+            }
+        } else if (key.startsWith('wan:')) {
+            const isDownload = key === 'wan:download';
+            const entityId = isDownload
+                ? 'dream_machine_special_edition_port_9_rx'
+                : 'dream_machine_special_edition_port_9_tx';
+            const val = state.dataStore[`${entityId}:state`];
+            if (val !== undefined && refs.element) {
+                const num = parseFloat(val);
+                if (!isNaN(num)) {
+                    refs.element.textContent = num < 1
+                        ? `${(num * 1000).toFixed(0)} Kbps`
+                        : `${num.toFixed(1)} Mbps`;
+                } else {
+                    refs.element.textContent = '--';
+                }
+            }
+        } else if (key.startsWith('ethspeed:')) {
+            // key = "ethspeed:eth-dl-{deviceId}" or "ethspeed:eth-ul-{deviceId}"
+            const cls = key.slice(9); // e.g. "eth-dl-server_rack"
+            const isRx = cls.startsWith('eth-dl-');
+            const deviceId = cls.slice(7); // strip "eth-dl-" or "eth-ul-"
+            const mapping = state.ethernetDeviceMap?.[deviceId];
+            if (mapping) {
+                const entityId = isRx ? mapping.rx : mapping.tx;
+                const val = state.dataStore[`${entityId}:state`];
+                if (val !== undefined && refs.element) {
+                    const num = parseFloat(val);
+                    if (!isNaN(num)) {
+                        refs.element.textContent = num < 1
+                            ? `${(num * 1000).toFixed(0)} Kbps`
+                            : `${num.toFixed(1)} Mbps`;
+                    }
+                }
+            }
+        } else if (key.startsWith('temp:')) {
+            const sensorId = key.slice(5);
+            // Temperature update
+            const tempVal = state.dataStore[`${sensorId}:temperature`] ?? state.dataStore[`${sensorId}:state`];
+            if (tempVal !== undefined && refs.tempValue) {
+                const temp = parseFloat(tempVal);
+                if (!isNaN(temp)) {
+                    refs.tempValue.textContent = `${temp.toFixed(1)}°C`;
+                    // Color from cool blue to warm red
+                    const t = Math.max(0, Math.min(1, (temp - 15) / (30 - 15)));
+                    const r = Math.floor(173 + (255 - 173) * t);
+                    const g = Math.floor(216 + (0 - 216) * t);
+                    const b = Math.floor(230 + (0 - 230) * t);
+                    refs.element.style.color = `rgb(${r}, ${g}, ${b})`;
+                    refs.element.classList.remove('sensor-failed');
+                }
+            }
+        } else if (key.startsWith('sensor:')) {
+            const sensorId = key.slice(7);
+            // Motion/binary sensor update
+            const motionVal = state.dataStore[`${sensorId}:motion`] ?? state.dataStore[`${sensorId}:state`];
+            if (motionVal !== undefined && refs.element) {
+                const isOn = motionVal === 'on' || motionVal === 'occupied';
+                if (isOn) {
+                    refs.element.classList.add('motion-active');
+                } else {
+                    refs.element.classList.remove('motion-active');
+                }
+            }
+        }
+    }
+}
+
 // --- ANIMATIE LOOP ---
 function animate(renderer, labelRenderer, scene, camera, controls) {
-    // Geef labelRenderer ook weer door aan de volgende frame
     requestAnimationFrame(() => animate(renderer, labelRenderer, scene, camera, controls));
-    
+
     controls.update();
 
     // Animate ethernet beams
@@ -944,13 +964,12 @@ function animate(renderer, labelRenderer, scene, camera, controls) {
         state.ethernetBeams.forEach(mat => { mat.uniforms.uTime.value = t; });
     }
 
-    // Render de 3D objecten
+    // Throttled DOM label updates (10fps, frustum-culled)
+    updateLabels(camera);
+
+    // Render
     renderer.render(scene, camera);
-    
-    // RENDER HIER DE LABELS:
-    if (labelRenderer) {
-        labelRenderer.render(scene, camera);
-    }
+    if (labelRenderer) labelRenderer.render(scene, camera);
 }
 // Slider koppelen voor zon-tijd
 const timeSlider = document.getElementById('timeSlider');
