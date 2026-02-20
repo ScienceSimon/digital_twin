@@ -97,10 +97,8 @@ async function init() {
         state.staticData = restData.static;
         state.metricsData = restData.metrics;
 
-        // 6. Radar beacon
-        const mijnRadar = createRadarBeacon();
-        state.scene.add(mijnRadar);
-        state.iotMeshes.push({ mesh: mijnRadar, data: { id: 'radar_office_position' } });
+        // 6. Position beacons (dynamically created per tracked person)
+        state.positionBeacons = {};
 
         // 7. Bouw IoT + static assets
         buildAssets(state.iotData, state);
@@ -313,25 +311,53 @@ async function init() {
                     }
                 }
 
-                // Radar beacon position
-                // if (entityId === 'Radar_Location/Office') {
-                if (entityId === 'Position/Location') {
+                // Position beacon updates (multi-person)
+                if (entityId === 'Position' || entityId.startsWith('Position/')) {
                     try {
-                        const coords = typeof value === 'string' ? JSON.parse(value) : value;
-                        const beaconEntry = state.iotMeshes.find(item => item.data.id === 'radar_office_position');
+                        const data = typeof value === 'string' ? JSON.parse(value) : value;
 
-                        if (beaconEntry && coords.x && coords.z) {
-                            gsap.to(beaconEntry.mesh.position, {
-                                x: parseFloat(coords.x),
-                                y: parseFloat(coords.y),
-                                z: parseFloat(coords.z),
-                                duration: 0.2,
+                        // Support both formats:
+                        // Full: { presence, persons: [{x,y,z,...}, ...], updatedAt }
+                        // Simple: { x, y, z }
+                        const persons = data.persons
+                            ? data.persons
+                            : (data.x !== undefined ? [data] : []);
+
+
+                        // Update or create a beacon for each person
+                        persons.forEach((person, i) => {
+                            if (!state.positionBeacons[i]) {
+                                const beacon = createRadarBeacon();
+                                state.scene.add(beacon);
+                                state.positionBeacons[i] = beacon;
+                            }
+                            const beacon = state.positionBeacons[i];
+                            beacon.visible = true;
+
+                            gsap.to(beacon.position, {
+                                x: parseFloat(person.x),
+                                y: parseFloat(person.y),
+                                z: parseFloat(person.z),
+                                duration: 0.3,
                                 ease: "power1.out"
                             });
+                        });
+
+                        // Hide beacons for persons no longer tracked
+                        Object.keys(state.positionBeacons).forEach(key => {
+                            if (parseInt(key) >= persons.length) {
+                                state.positionBeacons[key].visible = false;
+                            }
+                        });
+
+                        // If presence is explicitly false, hide all beacons
+                        if (data.presence === false) {
+                            Object.values(state.positionBeacons).forEach(b => b.visible = false);
                         }
                     } catch (e) {
-                        // XYZ parse error
+                        console.error('Position beacon error:', e);
                     }
+                    return;
                 }
 
                 // Light mesh appearance

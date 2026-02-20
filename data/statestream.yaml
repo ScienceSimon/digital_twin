@@ -32,8 +32,3 @@ assets:
   - id: usw_flex_mini_kantoor_port_5_tx
   - id: usw_flex_mini_zolder_port_3_rx
   - id: usw_flex_mini_zolder_port_3_tx
-
-  - id: radar_office_position
-    name: "Radar Office"
-    topic: "Radar_Location/Office"
-    type: "radar_beacon"
