@@ -191,18 +191,18 @@ assets:
     z: 11.15
 
 # Level 0 - Hallway & Stairs
-  - id: "ESP_Node_15"
+  - id: "ESP_Node_24"
     model: "standard"
-    friendly_name: "ESP_Node_15"
+    friendly_name: "ESP_Node_24"
     location: "Hallway"
     type: "presence"
     x: 2.20
     y: 0.50
     z: 2.05
 
-  - id: "ESP_Node_24"
+  - id: "ESP_Node_15"
     model: "standard"
-    friendly_name: "ESP_Node_24"
+    friendly_name: "ESP_Node_15"
     location: "Hallway"
     type: "presence"
     x: 0.50
